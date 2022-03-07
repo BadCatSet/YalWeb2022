@@ -1,16 +1,20 @@
-from hashlib import sha256 as hasher
+from hashlib import sha256
 from sqlite3.dbapi2 import Connection as Con
+
+
+def hasher(a: str):
+    return sha256(bytes(a, 'utf-8')).hexdigest()
 
 
 def nn(a):
     return a is not None
 
 
-def construct(args: dict):
+def construct(prefix: str, args: dict):
     exists = list(map(nn, args.values()))
     if not any(exists):
-        return """"""
-    call = """ WHERE"""
+        return prefix
+    call = prefix + """ WHERE"""
     attrs = []
     for n, (arg, val) in enumerate(args.items()):
         if exists[n]:
@@ -19,27 +23,31 @@ def construct(args: dict):
     return call[:-4], attrs
 
 
-def get_exercise(con: Con, self_id=None, owner_id=None):
+def get_exercise(con: Con, _id=None, owner_id=None):
     """
     :param con: Connection
-    :param self_id: id
+    :param _id: id
     :param owner_id: owner_id
     :return: exercises by args
     """
-    attrs = {'id': self_id, 'owner_id': owner_id}
-    return con.execute(*construct(attrs)).fetchall()
+    attrs = {'id': _id, 'owner_id': owner_id}
+    call = construct("""SELECT * FROM exercises""", attrs)
+    return con.execute(*call).fetchall()
 
 
-def get_users(con: Con, self_id=None, email=None, password: str | None = None):
+def get_users(con: Con, _id=None, email=None, password: str | None = None):
     """
     :param con: Connection
-    :param self_id: id
+    :param _id: id
     :param email: email
     :param password: password(not hashed)
     :return: users by args
     """
-    attrs = {
-        'id': self_id,
-        'email': email,
-        'password': hasher(password) if nn(password) else None}
-    return con.execute(*construct(attrs)).fetchall()
+    attrs = {'id': _id, 'email': email, 'password_h': hasher(password) if nn(password) else None}
+    call = construct("""SELECT * FROM users""", attrs)
+    return con.execute(*call).fetchall()
+
+
+def add_user(con: Con, email: str, password: str):
+    con.execute(f"""INSERT INTO users(email, password_h) VALUES(?, ?)""", (email, hasher(password)))
+    con.commit()
