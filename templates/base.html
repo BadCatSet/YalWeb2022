@@ -12,7 +12,20 @@
     <title>Hello, world!</title>
   </head>
   <body>
-    <nav class="navbar navbar-light bg-light">
+  <style type="text/css">
+   BODY { margin-bottom: 50px; background: rgb(62, 62, 62);}
+   #block {
+    background: rgb(62, 62, 62);}
+       #blok_bottom1 {
+    position: fixed;
+    left: 0; bottom: 0;
+    padding: 50px;
+    background: rgb(69, 69, 69);
+    color: #fff;
+    width: 100%;
+   }
+  </style>
+    <nav class="navbar navbar-dark" style="background-color: rgb(82,82,82);" >
       <div class="container-fluid">
         <a class="navbar-brand" href="/">YalWeb2022</a>
         <form class="d-flex">
@@ -37,7 +50,7 @@
         </form>
       </div>
     </nav>
-
+    <div id="blok_bottom1">Контактная информация</div>
     <main role="main" class="container">
       {% block content %}{% endblock %}
     </main>
