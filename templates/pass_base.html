@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<table>
+  <tr>
+    { %for i in task_names% }
+    <td>{{ i }}</td>
+    { %endfor %}
+  </tr>
+  {% block content %}{% endblock %}
+</table>
+
+{% endblock %}

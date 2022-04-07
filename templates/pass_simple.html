@@ -1,8 +1,7 @@
-{% extends "base.html" %}
+{% extends "pass_base.html" %}
 
 {% block content %}
-
-<h1>Авторизация</h1>
+<div>{ condition }</div>
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   <p>
@@ -13,7 +12,7 @@
     {{ error }}
   </div>
   {% endfor %}
-
+  </p>
   <p>
     {{ form.password.label }}<br>
     {{ form.password(class="form-control", type="password") }}<br>
@@ -22,10 +21,8 @@
     {{ error }}
   </div>
   {% endfor %}
-
-  <p>
-    {{ form.submit(type="submit", class="btn btn-primary") }}
   </p>
+  <p>
+    {{ form.submit(type="submit", class="btn btn-primary") }} </p>
 </form>
-
 {% endblock %}

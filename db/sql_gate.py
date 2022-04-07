@@ -32,15 +32,15 @@ def construct_insert(con, base_table: str, values: dict | None = None):
     pass
 
 
-def get_exercise(con: Con, _id=None, owner_id=None):
+def get_test(con: Con, test_id=None, owner_id=None):
     """
     :param con: Connection
-    :param _id: id
+    :param test_id: id
     :param owner_id: owner_id
-    :return: exercises by args
+    :return: test by args
     """
-    attrs = {'id': _id, 'owner_id': owner_id}
-    return complex_select(con, 'exercises', where=attrs).fetchall()
+    attrs = {'id': test_id, 'owner_id': owner_id}
+    return complex_select(con, 'tests', where=attrs).fetchall()
 
 
 def get_users(con: Con, user_id=None, email=None, password: str | None = None):
