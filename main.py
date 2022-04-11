@@ -87,6 +87,33 @@ class PassSimpleTask:
         return content
 
 
+class Test:
+    task_dict = {'input': TaskInput}
+
+    def __init__(self, test_id):
+        self.test_id = test_id
+        self.exercises = []
+
+        with open(f'tests_data/{test_id}.json') as file:
+            raw_data = json.load(file)
+        version = raw_data['version']
+        content = raw_data['content']
+
+        for i in content:
+            self.handle_task(i, version)
+
+    def handle_task(self, raw_data, version):
+        task_data = raw_data['task']
+        task_type = task_data['type']
+        score = task_data['score']
+
+        task = self.task_dict[task_type]
+        self.exercises.append(task(raw_data, score, version))
+
+    def match_id(self, other_test_id):
+        return self.test_id == other_test_id
+
+
 class SavedAnswer:
     def __init__(self, task, score):
         self.task = task
