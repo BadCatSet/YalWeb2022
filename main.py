@@ -5,10 +5,12 @@ from logging import critical, debug, error, info, warning
 import sqlite3
 
 from flask import Flask, redirect, render_template
-from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from flask_login import LoginManager, current_user, login_required, login_user, \
+    logout_user
 
 from db import sql_gate
 from forms.login import LoginForm
+from forms.new_test import newTestForm
 from forms.pass_all import PassStartForm
 from forms.signup import SignupForm
 
@@ -115,7 +117,8 @@ def index():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = sql_gate.get_users(con, email=form.data['email'], password=form.data['password'])
+        user = sql_gate.get_users(con, email=form.data['email'],
+                                  password=form.data['password'])
         if len(user):
             login_user(User(user[0]), remember=True)
             return redirect('/')
@@ -159,6 +162,23 @@ def pass_handler(test_id, exercise_number):
     answer = saved_answers[item_id][exercise_number]
     if answer is None:
         pass
+
+
+@app.route("/pass_creator_start", methods=['GET', 'POST'])
+def pass_creator_start():
+    form = newTestForm()
+    if form.validate_on_submit():
+        return redirect('/pass_creator/1')
+    return render_template('pass_start.html',
+                           tilte='Начало теста',
+                           form=form,
+                           info="Создание теста")
+
+
+@app.route('/pass_creator/<int:exercise>', methods=['GET', 'POST'])
+def pass_creator(exercise: int):
+    return render_template('pass_creator_start.html',
+                           title=f"Создание теста/вопрос {exercise}")
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 from hashlib import sha256
 from sqlite3.dbapi2 import Connection as Con
 
+from typing import List
+
 
 def hasher(a: str):
     return sha256(bytes(a, 'utf-8')).hexdigest()
@@ -10,7 +12,8 @@ def nn(a):
     return a is not None
 
 
-def complex_select(con: Con, base_table: str, fields: list[str] | None = None, where: dict | None = None):
+def complex_select(con: Con, base_table: str, fields: List[str] = None,
+                   where: dict = None):
     if fields is None:
         fields = ['*']
     if where is None:
@@ -28,7 +31,7 @@ def complex_select(con: Con, base_table: str, fields: list[str] | None = None, w
     return con.execute(call[:(-4 if where_exists else -6)], args)
 
 
-def construct_insert(con, base_table: str, values: dict | None = None):
+def construct_insert(con, base_table: str, values: dict = None):
     pass
 
 
@@ -43,7 +46,7 @@ def get_test(con: Con, test_id=None, owner_id=None):
     return complex_select(con, 'tests', where=attrs).fetchall()
 
 
-def get_users(con: Con, user_id=None, email=None, password: str | None = None):
+def get_users(con: Con, user_id=None, email=None, password: str = None):
     """
     :param con: Connection
     :param user_id: id
@@ -57,6 +60,7 @@ def get_users(con: Con, user_id=None, email=None, password: str | None = None):
     return complex_select(con, 'users', where=attrs).fetchall()
 
 
-def add_user(con: Con, email: str, password: str, username: str | None = None):
-    con.execute(f"""INSERT INTO users(email, password_h) VALUES(?, ?)""", (email, hasher(password)))
+def add_user(con: Con, email: str, password: str, username: str = None):
+    con.execute(f"""INSERT INTO users(email, password_h) VALUES(?, ?)""",
+                (email, hasher(password)))
     con.commit()
