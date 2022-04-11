@@ -219,3 +219,4 @@ if __name__ == '__main__':
     app.run()
 
     _ = current_user, debug, info, warning, error, critical  # просто так надо
+# nothing
