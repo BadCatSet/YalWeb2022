@@ -252,15 +252,12 @@ def pass_complete(test_id):
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
+# @login_required
 def test_creator_start():
     form = newTestForm()
     if form.validate_on_submit():
         if form.test_name.data == '':
             flash('Название теста не может быть пустым!')
-        elif form.quantite_of_answers.data is None:
-            flash('Количество вопросов не может быть пустым!')
-        elif form.quantite_of_answers.data <= 0:
-            flash('Количество вопросов должно быть больше нуля!')
         else:
             return redirect('/test_creator/1')
     return render_template('test_creator_start.html',
@@ -269,13 +266,12 @@ def test_creator_start():
 
 
 @app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
+# @login_required
 def test_creator(exercise: int):
-    return render_template('test_creator.html',
-                           title=f"Создание теста/вопрос {exercise}")
+    return render_template('test_creator.html', title=f"Создание теста/вопрос {exercise}")
 
 
 if __name__ == '__main__':
-
     loaded_tests = {}  # {test_id: Test}
     saved_answers = {}  # {(user_id, test_id): {exercise_number: answer}}
     # dict[(int, int):dict[int:SavedAnswer]]
