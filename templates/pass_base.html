@@ -1,13 +1,47 @@
 {% extends "base.html" %}
 
 {% block content %}
-<table>
-  <tr>
-    { %for i in task_names% }
-    <td>{{ i }}</td>
-    { %endfor %}
-  </tr>
-  {% block content %}{% endblock %}
-</table>
+
+  <table>
+    <tr>
+      <td>
+        <div class="div-text">
+          Задания:
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            {% for i in task_names %}
+              <td>
+              <span class="span span-task-pick">
+                <a class="a a-task-pick" href="/pass/{{ test_id }}/{{ i }}">{{ i }}</a>
+              </span>
+              </td>
+            {% endfor %}
+            <td>
+            <a class="btn btn-warning" href="/pass/{{ test_id }}/complete">Сдать работу учителю</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>
+        <div class="div-text">
+          Выполни задание:
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        {% block sub_content %}{% endblock %}
+      </td>
+    </tr>
+  </table>
 
 {% endblock %}

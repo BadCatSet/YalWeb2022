@@ -6,6 +6,6 @@ class PassStartForm(FlaskForm):
     submit = SubmitField('Начать прохождение')
 
 
-class PassSimpleForm(FlaskForm):
+class TaskInputForm(FlaskForm):
     answer = StringField('Ответ')
-    submit = SubmitField('Войти')
+    submit = SubmitField('Сохранить')
