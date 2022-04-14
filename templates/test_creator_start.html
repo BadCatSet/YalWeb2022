@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block content %}
     <br><br>
     {% for msg in get_flashed_messages() %}
@@ -6,7 +7,7 @@
         alert("{{ msg }}");
         </script>
     {% endfor %}
-    <form action="" method="post" novalidate>
+    <form id="newTestForm" action="" method="post" novalidate>
         <div>
             {{ form.csrf_token }}
         </div>
