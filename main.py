@@ -3,6 +3,7 @@ import json
 import logging
 from logging import critical, debug, error, info, warning
 import sqlite3
+from typing import Any
 
 from flask import Flask, redirect, render_template, flash
 from flask_login import LoginManager, current_user, login_required, login_user, \
@@ -11,7 +12,7 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from db import sql_gate
 from forms.login import LoginForm
 from forms.new_test import newTestForm
-from forms.pass_all import PassStartForm
+from forms.pass_all import PassStartForm, TaskInputForm
 from forms.signup import SignupForm
 
 logging.basicConfig(
@@ -30,6 +31,10 @@ login_manager.init_app(app)
 
 
 class AppError(Exception):
+    pass
+
+
+class PassError(AppError):
     pass
 
 
@@ -60,31 +65,29 @@ class User:
         auth:{self.is_authenticated}'''
 
 
-class Test:
-    def __init__(self, test_id):
-        self.test = sql_gate.get_test(con, test_id)
+class Task:
+    actual_version: int
 
+    def __init__(self, data, score, version):
 
-class PassSimpleTask:
-    actual_version = 1
-
-    def __init__(self, raw_data):
-        data = json.loads(raw_data)
-        version = data['version']
-        content = data['content']
         if version != self.actual_version:
-            content = self.update_content_version(content, version)
+            data = self.update_data_version(data, version)
 
-        self.condition = content['text']
-        self.question = content['question']
-        self.answer = content['answer']
-        self.answer_type = content['answer_type']
+        self.__dict__.update(data)
+        self.score = score
 
-    # сделаю по мере необходимости, так же нужна функция для обновления данных в бд
-    def update_content_version(self, content, version):
+    # сделаю по мере необходимости в конкретных заданиях, так же нужна функция для обновления данных в бд
+    def update_data_version(self, content, version):
         while version != self.actual_version:
             version += 1
         return content
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+
+class TaskInput(Task):
+    actual_version = 1
 
 
 class Test:
@@ -94,33 +97,50 @@ class Test:
 
     def __init__(self, test_id):
         self.test_id = test_id
-        self.exercises = []
+        self.tasks = []
+        self.max_score = 0
 
-        with open(f'tests_data/{test_id}.json') as file:
-            raw_data = json.load(file)
-        version = raw_data['version']
-        content = raw_data['content']
+        with open(f'tests_data/{test_id}.json', encoding='utf-8') as file:
+            data = json.load(file)
+        version = data['version']
+        content = data['content']
 
         for i in content:
             self.handle_task(i, version)
 
-    def handle_task(self, raw_data, version):
-        task_data = raw_data['task']
-        task_type = task_data['type']
-        score = task_data['score']
+    def handle_task(self, data, version):
+        task_data = data['task']
+        task_type = data['type']
+        score = data['score']
+
+        self.max_score += score
 
         task = self.task_dict[task_type]
-        self.exercises.append(task(raw_data, score, version))
+        self.tasks.append(task(task_data, score, version))
 
     def match_id(self, other_test_id):
         return self.test_id == other_test_id
 
+    def get_task(self, number):
+        return self.tasks[number]
+
+    def task_names(self):
+        return list(map(lambda x: int(x) + 1, range(len(self.tasks))))
+
 
 class SavedAnswer:
-    def __init__(self, task, score):
+    def __init__(self, task):
         self.task = task
-        self.score = score
-        self.answer = None
+        self.answer: Any = None
+
+    def set(self, answer):
+        self.answer = answer
+
+    def get_score(self):
+        return self.task.score * (self.task.correct_answer == self.answer)
+
+    def __repr__(self):
+        return f'SavedAnswer for:\ntask: {self.task}\nanswer: {self.answer}'
 
 
 @login_manager.user_loader
@@ -172,25 +192,63 @@ def signup():
 
 @app.route('/pass/<int:test_id>', methods=['GET', 'POST'])
 def pass_start(test_id):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     form = PassStartForm()
     if form.validate_on_submit():
-        item_id = current_user.get_id(), test_id
-        saved_answers[item_id] = saved_answers.get(item_id, {})
-
         return redirect(f'/pass/{test_id}/1')
+
     return render_template('pass_start.html',
                            tilte='Начало теста',
                            form=form)
 
 
-@app.route('/pass/<int:test_id>/<int:exercise>', methods=['GET', 'POST'])
+@app.route('/pass/<int:test_id>/<int:exercise_number>', methods=['GET', 'POST'])
 def pass_handler(test_id, exercise_number):
-    item_id = current_user.get_id(), test_id
-    if exercise_number not in list(saved_answers[item_id]):
-        saved_answers[item_id][exercise_number] = SavedAnswer()
-    answer = saved_answers[item_id][exercise_number]
-    if answer is None:
-        pass
+    exercise_number -= 1
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    item_id = current_user.get_id(), test_id, exercise_number
+
+    if test_id not in loaded_tests:
+        loaded_tests[test_id] = Test(test_id)
+    current_test = loaded_tests[test_id]
+
+    if item_id not in saved_answers:
+        saved_answers[item_id] = SavedAnswer(current_test.get_task(exercise_number))
+    task_names = current_test.task_names()
+
+    if isinstance(loaded_tests[test_id].get_task(exercise_number), TaskInput):
+        return pass_input(test_id, exercise_number, task_names)
+
+
+def pass_input(test_id, exercise_number, task_names):
+    item_id = current_user.get_id(), test_id, exercise_number
+
+    form = TaskInputForm()
+    if form.validate_on_submit():
+        answer = form.data['answer']  # TODO
+        saved_answers[item_id].set(answer)
+
+    task = loaded_tests[test_id].get_task(exercise_number)
+
+    return render_template('pass_input.html',
+                           title='тест',
+                           condition=task.text,
+                           form=form,
+                           task_names=task_names,
+                           test_id=test_id)
+
+
+@app.route("/pass/<int:test_id>/complete")
+def pass_complete(test_id):
+    user_id = current_user.get_id()
+    max_score = loaded_tests[test_id].max_score
+    real_score = 0
+    for _, s in filter(lambda x: x[0][0] == user_id and x[0][1] == test_id, saved_answers.items()):
+        real_score += s.get_score()
+    sql_gate.add_result(con, user_id, test_id, real_score, max_score)
+    return redirect('/')
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
@@ -217,15 +275,17 @@ def test_creator(exercise: int):
 
 
 if __name__ == '__main__':
+
     loaded_tests = {}  # {test_id: Test}
     saved_answers = {}  # {(user_id, test_id): {exercise_number: answer}}
     # dict[(int, int):dict[int:SavedAnswer]]
+
+    loaded_tests: dict[int, Test] = dict()  # {test_id: Test}
+    saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
     info('...connected successful')
 
     app.run()
-
     _ = current_user, debug, info, warning, error, critical  # просто так надо
-# nothing

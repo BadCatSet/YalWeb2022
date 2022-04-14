@@ -1,7 +1,7 @@
 from hashlib import sha256
 from sqlite3.dbapi2 import Connection as Con
 
-from typing import List
+from typing import Any, List
 
 
 def hasher(a: str):
@@ -12,8 +12,7 @@ def nn(a):
     return a is not None
 
 
-def complex_select(con: Con, base_table: str, fields: List[str] = None,
-                   where: dict = None):
+def construct_select(con: Con, base_table: str, fields: List[str] = None, where: dict = None):
     if fields is None:
         fields = ['*']
     if where is None:
@@ -31,8 +30,18 @@ def complex_select(con: Con, base_table: str, fields: List[str] = None,
     return con.execute(call[:(-4 if where_exists else -6)], args)
 
 
-def construct_insert(con, base_table: str, values: dict = None):
-    pass
+def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
+    fields = list()
+    args = list()
+    for k, v in values.items():
+        if v is not None:
+            fields.append(k)
+            args.append(v)
+
+    call = f"""INSERT INTO {base_table} ({', '.join(fields)}) VALUES ({', '.join('?' * len(args))})"""
+
+    con.execute(call, args)
+    con.commit()
 
 
 def get_test(con: Con, test_id=None, owner_id=None):
@@ -43,7 +52,7 @@ def get_test(con: Con, test_id=None, owner_id=None):
     :return: test by args
     """
     attrs = {'id': test_id, 'owner_id': owner_id}
-    return complex_select(con, 'tests', where=attrs).fetchall()
+    return construct_select(con, 'tests', where=attrs).fetchall()
 
 
 def get_users(con: Con, user_id=None, email=None, password: str = None):
@@ -57,10 +66,23 @@ def get_users(con: Con, user_id=None, email=None, password: str = None):
     attrs = {'id': user_id,
              'email': email,
              'password_h': hasher(password) if nn(password) else None}
-    return complex_select(con, 'users', where=attrs).fetchall()
+    return construct_select(con, 'users', where=attrs).fetchall()
 
 
 def add_user(con: Con, email: str, password: str, username: str = None):
-    con.execute(f"""INSERT INTO users(email, password_h) VALUES(?, ?)""",
-                (email, hasher(password)))
-    con.commit()
+    attrs = {
+        'email': email,
+        'pass': password,
+        username: username
+    }
+    construct_insert(con, 'users', attrs)
+
+
+def add_result(con: Con, user_id, test_id, real_score, max_score):
+    attrs = {
+        'user_id': user_id,
+        'test_id': test_id,
+        'real_score': real_score,
+        'max_score': max_score
+    }
+    construct_insert(con, 'results', attrs)
