@@ -5,8 +5,9 @@ from logging import critical, debug, error, info, warning
 import sqlite3
 from typing import Any
 
-from flask import Flask, redirect, render_template
-from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from flask import Flask, redirect, render_template, flash
+from flask_login import LoginManager, current_user, login_required, login_user, \
+    logout_user
 
 from db import sql_gate
 from forms.login import LoginForm
@@ -90,7 +91,9 @@ class TaskInput(Task):
 
 
 class Test:
-    task_dict = {'input': TaskInput}
+    task_dict = {}
+
+    # task_dict = {'input': TaskInput}
 
     def __init__(self, test_id):
         self.test_id = test_id
@@ -248,24 +251,35 @@ def pass_complete(test_id):
     return redirect('/')
 
 
-@app.route("/pass_creator_start", methods=['GET', 'POST'])
-def pass_creator_start():
+@app.route("/test_creator", methods=['GET', 'POST'])
+def test_creator_start():
     form = newTestForm()
     if form.validate_on_submit():
-        return redirect('/pass_creator/1')
-    return render_template('pass_start.html',
-                           tilte='Начало теста',
-                           form=form,
-                           info="Создание теста")
+        if form.test_name.data == '':
+            flash('Название теста не может быть пустым!')
+        elif form.quantite_of_answers.data is None:
+            flash('Количество вопросов не может быть пустым!')
+        elif form.quantite_of_answers.data <= 0:
+            flash('Количество вопросов должно быть больше нуля!')
+        else:
+            return redirect('/test_creator/1')
+    return render_template('test_creator_start.html',
+                           tilte='Конфигурация теста',
+                           form=form)
 
 
-@app.route('/pass_creator/<int:exercise>', methods=['GET', 'POST'])
-def pass_creator(exercise: int):
-    return render_template('pass_creator_start.html',
+@app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
+def test_creator(exercise: int):
+    return render_template('test_creator.html',
                            title=f"Создание теста/вопрос {exercise}")
 
 
 if __name__ == '__main__':
+
+    loaded_tests = {}  # {test_id: Test}
+    saved_answers = {}  # {(user_id, test_id): {exercise_number: answer}}
+    # dict[(int, int):dict[int:SavedAnswer]]
+
     loaded_tests: dict[int, Test] = dict()  # {test_id: Test}
     saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
@@ -274,5 +288,4 @@ if __name__ == '__main__':
     info('...connected successful')
 
     app.run()
-    print(saved_answers)
-    _ = debug, info, warning, error, critical  # просто так надо
+    _ = current_user, debug, info, warning, error, critical  # просто так надо
