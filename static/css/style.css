@@ -9,26 +9,25 @@ body {
     font-size: 25px;
 }
 
+
 .span-task-pick {
     display: block;
     height: 30px;
     width: 30px;
     line-height: 30px;
     text-align: center;
-    -moz-border-radius: 50%;
     border-radius: 50%;
     background-color: #202225;
 }
 
 
 .navbar-dark {
-    background-color: rgb(32, 34, 37);
+    background-color: #202225;
 }
 
 .div-text {
     color: #d7d5cf;
     text-decoration: none;
-
 }
 
 .div-accent {
@@ -37,13 +36,33 @@ body {
     background-color: #2f3136;
 }
 
+.a-test-preview:any-link {
+    color: #202225;
+    text-decoration: none;
+    font-size: 30px;
+}
+
+
+.div-test-preview {
+    width: 200px;
+    height: 90px;
+    background-color: #ffa900;
+    padding: 15px;
+    margin: 15px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
 #block_bottom1 {
     position: fixed;
     left: 0;
     bottom: 0;
     padding: 50px;
-    background: #2F3136FF;
-    color: #fff;
+    background: #2f3136ff;
+    color: #ffffff;
     width: 100%;
 }
 

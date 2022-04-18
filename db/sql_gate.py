@@ -44,7 +44,7 @@ def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
     con.commit()
 
 
-def get_test(con: Con, test_id=None, owner_id=None):
+def get_tests(con: Con, test_id=None, owner_id=None):
     """
     :param con: Connection
     :param test_id: id
@@ -72,8 +72,8 @@ def get_users(con: Con, user_id=None, email=None, password: str = None):
 def add_user(con: Con, email: str, password: str, username: str = None):
     attrs = {
         'email': email,
-        'password_h': password,
-        username: username
+        'password_h': hasher(password),
+        'username': username
     }
     construct_insert(con, 'users', attrs)
 
@@ -86,3 +86,49 @@ def add_result(con: Con, user_id, test_id, real_score, max_score):
         'max_score': max_score
     }
     construct_insert(con, 'results', attrs)
+
+
+def init_database(con):
+    s = """PRAGMA foreign_keys = off;
+BEGIN TRANSACTION;
+
+CREATE TABLE if not exists results (
+    test_id    INTEGER REFERENCES tests (id) 
+                       NOT NULL,
+    user_id    INTEGER REFERENCES users (id) 
+                       NOT NULL,
+    real_score DOUBLE  NOT NULL,
+    max_score  INTEGER NOT NULL
+);
+
+
+
+
+CREATE TABLE if not exists tests (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT
+                     NOT NULL
+                     DEFAULT (1),
+    owner_id INTEGER NOT NULL
+                     REFERENCES users (id),
+    name     STRING
+);
+
+
+
+CREATE TABLE if not exists users (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT
+                       UNIQUE
+                       NOT NULL,
+    email      STRING  UNIQUE
+                       NOT NULL,
+    password_h STRING  NOT NULL,
+    username   STRING  UNIQUE
+);
+
+
+COMMIT TRANSACTION;
+PRAGMA foreign_keys = on;
+"""
+    for i in s.split(';'):
+        con.execute(i)
+    con.commit()
