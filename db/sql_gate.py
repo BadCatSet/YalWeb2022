@@ -72,7 +72,7 @@ def get_users(con: Con, user_id=None, email=None, password: str = None):
 def add_user(con: Con, email: str, password: str, username: str = None):
     attrs = {
         'email': email,
-        'pass': password,
+        'password_h': password,
         username: username
     }
     construct_insert(con, 'users', attrs)
