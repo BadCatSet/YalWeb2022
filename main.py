@@ -5,7 +5,7 @@ from logging import critical, debug, error, info, warning
 import sqlite3
 from typing import Any
 
-from flask import Flask, redirect, render_template, flash
+from flask import Flask, redirect, render_template, flash, request
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 
@@ -154,6 +154,18 @@ def load_user(user_id):
 def logout():
     logout_user()
     return redirect("/")
+
+
+@app.route('/personal_account', methods=['POST', 'GET'])
+@login_required
+def personal_account():
+    if request.method == 'GET':
+        return render_template('personal_account.html', title='YalWeb2022')
+    elif request.method == 'POST':
+        f = request.files['file']
+        print(current_user.get_id())
+        f.save('static/img/photo.png')
+        return render_template('personal_account.html', title='YalWeb2022')
 
 
 @app.route('/')

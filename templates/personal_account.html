@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+#box {
+position: absolute;
+width:40%;
+height:500px;
+background-color:#013220;
+padding: 20px; /* Поля вокруг текста */
+border-radius: 20px;
+margin-top: 2%;
+margin-left: 35%;}
+
+#box2 {
+position: absolute;
+width:20%;
+height:30%;
+background-color:#013220;
+padding: 20px; /* Поля вокруг текста */
+border-radius: 20px;
+margin-top: 2%;
+margin-left: 10%;}
+#leftcol4 {
+    margin-left: 37%;
+    margin-top: 5%;
+    position: absolute; /* Абсолютное позиционирование */
+    width: 550px; /* Ширина левой колонки */
+    background-color:#013220;
+
+   }
+#leftcol5 {
+    margin-left: 37%;
+    margin-top: 10%;
+    position: absolute; /* Абсолютное позиционирование */
+    width: 550px; /* Ширина левой колонки */
+    background-color:#013220;
+
+   }
+#box3{    margin-left: 12%;
+    margin-top: 8%;
+    position: absolute; /* Абсолютное позиционирование */
+    width: 15%; /* Ширина левой колонки */
+    background-color:#013220;}
+#inputGroupFile02{
+background-color:#ffe5b4;
+}
+ </style>
+<div id="box"></div>
+<div id="box2"></div>
+<input class="form-control form-control-lg" id="leftcol5" type="text" placeholder="Логин" aria-label=".form-control-lg example">
+<input class="form-control form-control-lg" id="leftcol4" type="text" placeholder="Имя пользователя" aria-label=".form-control-lg example">
+<img src="static/img/photo.png"
+           alt="здесь должна была быть картинка, но не нашлась" width="500" height="377">
+ <form method="post" enctype="multipart/form-data">
+    <div class="form-group">
+    <label for="photo">Выберите файл</label>
+    <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image/png">
+    </div>
+    <button type="submit" class="btn btn-primary">Отправить</button>
+</form>
+
+{% endblock %}
