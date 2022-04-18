@@ -89,6 +89,10 @@ class TaskInput(Task):
     actual_version = 1
 
 
+class TaskChoice(Task):
+    actual_version = 1
+
+
 class Test:
     task_dict = {'input': TaskInput}
 
@@ -182,12 +186,47 @@ def signup():
             form.email.errors.append('почта уже занята!')
         else:
             sql_gate.add_user(con, form.data['email'], form.data['password1'])
+            return redirect('/login')
     return render_template('signup.html',
                            title='Регистрация',
                            form=form)
 
 
+@app.route('/view_tests', methods=['GET'])
+@login_required
+def view_tests():
+    user_id = current_user.get_id()
+    tests = sql_gate.get_tests(con, owner_id=user_id)
+    data = []
+    for test_id, _, name in tests:
+        data.append((test_id, name))
+    indexes = []
+    len_data = len(data)
+    for i in range(0, len_data, 4):
+        indexes.append(list())
+        for j in range(i, min(i + 4, len_data)):
+            indexes[-1].append(j)
+
+    return render_template('view_tests.html',
+                           title='мои тесты',
+                           data=data,
+                           indexes=indexes)
+
+
+@app.route('/view_test/<int:test_id>', methods=['GET'])
+@login_required
+def view_test(test_id):
+    user_id = current_user.get_id()
+    test = sql_gate.get_tests(con, test_id=test_id, owner_id=user_id)
+
+    if not test:
+        return redirect('/')
+
+    return redirect('/')  # TODO
+
+
 @app.route('/pass/<int:test_id>', methods=['GET', 'POST'])
+@login_required
 def pass_start(test_id):
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -201,6 +240,7 @@ def pass_start(test_id):
 
 
 @app.route('/pass/<int:test_id>/<int:exercise_number>', methods=['GET', 'POST'])
+@login_required
 def pass_handler(test_id, exercise_number):
     exercise_number -= 1
     if not current_user.is_authenticated:
@@ -238,6 +278,7 @@ def pass_input(test_id, exercise_number, task_names):
 
 
 @app.route("/pass/<int:test_id>/complete")
+@login_required
 def pass_complete(test_id):
     user_id = current_user.get_id()
     max_score = loaded_tests[test_id].max_score
@@ -275,4 +316,4 @@ if __name__ == '__main__':
 
     app.run()
     print(saved_answers)
-    _ = debug, info, warning, error, critical  # просто так надо
+    _ = warning, critical  # просто так надо

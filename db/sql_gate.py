@@ -44,7 +44,7 @@ def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
     con.commit()
 
 
-def get_test(con: Con, test_id=None, owner_id=None):
+def get_tests(con: Con, test_id=None, owner_id=None):
     """
     :param con: Connection
     :param test_id: id
@@ -72,8 +72,8 @@ def get_users(con: Con, user_id=None, email=None, password: str = None):
 def add_user(con: Con, email: str, password: str, username: str = None):
     attrs = {
         'email': email,
-        'pass': password,
-        username: username
+        'password_h':  hasher(password),
+        'username': username
     }
     construct_insert(con, 'users', attrs)
 
