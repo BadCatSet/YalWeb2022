@@ -4,3 +4,4 @@ venv
 db/db.db
 tests_data
 01.py
+*_pycache_
