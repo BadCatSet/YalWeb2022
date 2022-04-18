@@ -312,6 +312,7 @@ if __name__ == '__main__':
 
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
+    sql_gate.init_database(con)
     info('...connected successful')
 
     app.run()
