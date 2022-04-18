@@ -1,6 +1,6 @@
 .idea
-.gitignore
 log.log
 venv
 db/db.db
 tests_data
+01.py
