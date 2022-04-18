@@ -89,7 +89,7 @@ def add_result(con: Con, user_id, test_id, real_score, max_score):
 
 
 def init_database(con):
-    con.execute("""PRAGMA foreign_keys = off;
+    s = """PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
 
 CREATE TABLE if not exists results (
@@ -128,5 +128,7 @@ CREATE TABLE if not exists users (
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
-""")
+"""
+    for i in s.split(';'):
+        con.execute(i)
     con.commit()
