@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <table>
+    {% for i in indexes %}
+      <tr>
+        {% for j in i %}
+          <td>
+            <div class="div div-test-preview">
+              <a class="a a-test-preview" href="view_test/{{ data[j][0] }}">{{ data[j][1] }}</a>
+            </div>
+          </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+
+{% endblock %}

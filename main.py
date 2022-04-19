@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from logging import critical, debug, error, info, warning
+import os
 import sqlite3
 from typing import Any
 
@@ -91,10 +92,12 @@ class TaskInput(Task):
     actual_version = 1
 
 
-class Test:
-    task_dict = {}
+class TaskChoice(Task):
+    actual_version = 1
 
-    # task_dict = {'input': TaskInput}
+
+class Test:
+    task_dict = {'input': TaskInput}
 
     def __init__(self, test_id):
         self.test_id = test_id
@@ -207,12 +210,47 @@ def signup():
             form.email.errors.append('почта уже занята!')
         else:
             sql_gate.add_user(con, form.data['email'], form.data['password1'])
+            return redirect('/login')
     return render_template('signup.html',
                            title='Регистрация',
                            form=form)
 
 
+@app.route('/view_tests', methods=['GET'])
+@login_required
+def view_tests():
+    user_id = current_user.get_id()
+    tests = sql_gate.get_tests(con, owner_id=user_id)
+    data = []
+    for test_id, _, name in tests:
+        data.append((test_id, name))
+    indexes = []
+    len_data = len(data)
+    for i in range(0, len_data, 4):
+        indexes.append(list())
+        for j in range(i, min(i + 4, len_data)):
+            indexes[-1].append(j)
+
+    return render_template('view_tests.html',
+                           title='мои тесты',
+                           data=data,
+                           indexes=indexes)
+
+
+@app.route('/view_test/<int:test_id>', methods=['GET'])
+@login_required
+def view_test(test_id):
+    user_id = current_user.get_id()
+    test = sql_gate.get_tests(con, test_id=test_id, owner_id=user_id)
+
+    if not test:
+        return redirect('/')
+
+    return redirect('/')  # TODO
+
+
 @app.route('/pass/<int:test_id>', methods=['GET', 'POST'])
+@login_required
 def pass_start(test_id):
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -226,6 +264,7 @@ def pass_start(test_id):
 
 
 @app.route('/pass/<int:test_id>/<int:exercise_number>', methods=['GET', 'POST'])
+@login_required
 def pass_handler(test_id, exercise_number):
     exercise_number -= 1
     if not current_user.is_authenticated:
@@ -263,6 +302,7 @@ def pass_input(test_id, exercise_number, task_names):
 
 
 @app.route("/pass/<int:test_id>/complete")
+@login_required
 def pass_complete(test_id):
     user_id = current_user.get_id()
     max_score = loaded_tests[test_id].max_score
@@ -274,7 +314,7 @@ def pass_complete(test_id):
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
-# @login_required
+@login_required
 def test_creator_start():
     form = newTestForm()
     if form.validate_on_submit():
@@ -288,22 +328,23 @@ def test_creator_start():
 
 
 @app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def test_creator(exercise: int):
     return render_template('test_creator.html', title=f"Создание теста/вопрос {exercise}")
 
 
 if __name__ == '__main__':
-    loaded_tests = {}  # {test_id: Test}
-    saved_answers = {}  # {(user_id, test_id): {exercise_number: answer}}
-    # dict[(int, int):dict[int:SavedAnswer]]
-
     loaded_tests: dict[int, Test] = dict()  # {test_id: Test}
     saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
+    sql_gate.init_database(con)
+    if not os.path.exists('tests_data'):
+        os.makedirs('tests_data')
     info('...connected successful')
 
     app.run()
-    _ = current_user, debug, info, warning, error, critical  # просто так надо
+    print(saved_answers)
+    
+    _ = warning, critical  # просто так надо
