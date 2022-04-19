@@ -158,7 +158,7 @@ def logout():
 
 
 @app.route('/personal_account', methods=['POST', 'GET'])
-# @login_required
+@login_required
 def personal_account():
     file_oldname = os.path.join("static/img", f'{current_user.get_id()}.png')
     file_newname_newfile = os.path.join("static/img", "photo.png")
