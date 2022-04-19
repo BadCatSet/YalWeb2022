@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import os
 from logging import critical, debug, error, info, warning
 import os
 import sqlite3
@@ -162,13 +163,22 @@ def logout():
 @app.route('/personal_account', methods=['POST', 'GET'])
 @login_required
 def personal_account():
+    file_oldname = os.path.join("static/img", f'{current_user.get_id()}.png')
+    file_newname_newfile = os.path.join("static/img", "photo.png")
     if request.method == 'GET':
-        return render_template('personal_account.html', title='YalWeb2022')
+        if f'static/img/{current_user.get_id()}.png' in os.listdir('static/img'):
+            os.rename(file_oldname, file_newname_newfile)
+            return render_template('personal_account.html', title='YalWeb2022', flag=True)
+        else:
+            return render_template('personal_account.html', title='YalWeb2022', flag=False)
+
     elif request.method == 'POST':
         f = request.files['file']
-        print(current_user.get_id())
-        f.save('static/img/photo.png')
-        return render_template('personal_account.html', title='YalWeb2022')
+        f.save(f'static/img/{current_user.get_id()}.png')
+        os.rename(file_oldname, file_newname_newfile)
+        return render_template('personal_account.html', title='YalWeb2022', flag=True,
+                               name=f'static/img/{current_user.get_id()}.png')
+    os.rename(file_newname_newfile, file_oldname)
 
 
 @app.route('/')
