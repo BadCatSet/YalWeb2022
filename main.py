@@ -177,6 +177,7 @@ def personal_account():
                                name=f'static/img/{current_user.get_id()}.png')
     os.rename(file_newname_newfile, file_oldname)
 
+
 @app.route('/')
 def index():
     return render_template('index.html',
