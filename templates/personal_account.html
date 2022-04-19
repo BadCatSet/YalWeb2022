@@ -50,14 +50,17 @@ background-color:#ffe5b4;
 <div id="box2"></div>
 <input class="form-control form-control-lg" id="leftcol5" type="text" placeholder="Логин" aria-label=".form-control-lg example">
 <input class="form-control form-control-lg" id="leftcol4" type="text" placeholder="Имя пользователя" aria-label=".form-control-lg example">
-<img src="static/img/photo.png"
+{% if flag %}
+
+        <img src="static/img/photo.png"
            alt="здесь должна была быть картинка, но не нашлась" width="500" height="377">
- <form method="post" enctype="multipart/form-data">
+ {% else %}
+        <form method="post" enctype="multipart/form-data">
     <div class="form-group">
     <label for="photo">Выберите файл</label>
-    <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image/png">
+    <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image">
     </div>
     <button type="submit" class="btn btn-primary">Отправить</button>
 </form>
-
+ {% endif %}
 {% endblock %}
