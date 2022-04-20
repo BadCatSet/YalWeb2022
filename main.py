@@ -6,7 +6,7 @@ import os
 import sqlite3
 from typing import Any
 
-from flask import Flask, redirect, render_template, flash, request
+from flask import Flask, flash, redirect, render_template, request
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 
@@ -96,9 +96,25 @@ class TaskChoice(Task):
 
 
 class Test:
-    task_dict = {'input': TaskInput}
+    _loaded = {}
+    task_dict = {'input': TaskInput, 'choice': TaskChoice}
 
-    def __init__(self, test_id):
+    def __new__(cls, test_id: int = 'new_test'):
+        if test_id == 'new_test':
+            test_id = sql_gate.add_test(con, owner_id=current_user.get_id())
+
+            with open(f'./tests_data/{test_id}.json', 'wb') as file, \
+                    open(f'./tests_data/empty.json', 'rb') as empty:
+                file.write(empty.read())
+
+        if (test := cls._loaded.get(test_id)) is not None:
+            return test
+        test = super().__new__(cls)
+        cls._loaded[test_id] = test
+        test._init_from_file(test_id)
+        return test
+
+    def _init_from_file(self, test_id):
         self.test_id = test_id
         self.tasks = []
         self.max_score = 0
@@ -261,15 +277,13 @@ def pass_handler(test_id, exercise_number):
         return redirect('/login')
     item_id = current_user.get_id(), test_id, exercise_number
 
-    if test_id not in loaded_tests:
-        loaded_tests[test_id] = Test(test_id)
-    current_test = loaded_tests[test_id]
+    current_test = Test(test_id)
 
     if item_id not in saved_answers:
         saved_answers[item_id] = SavedAnswer(current_test.get_task(exercise_number))
     task_names = current_test.task_names()
 
-    if isinstance(loaded_tests[test_id].get_task(exercise_number), TaskInput):
+    if isinstance(Test(test_id).get_task(exercise_number), TaskInput):
         return pass_input(test_id, exercise_number, task_names)
 
 
@@ -281,7 +295,7 @@ def pass_input(test_id, exercise_number, task_names):
         answer = form.data['answer']  # TODO
         saved_answers[item_id].set(answer)
 
-    task = loaded_tests[test_id].get_task(exercise_number)
+    task = Test(test_id).get_task(exercise_number)
 
     return render_template('pass_input.html',
                            title='тест',
@@ -295,7 +309,7 @@ def pass_input(test_id, exercise_number, task_names):
 @login_required
 def pass_complete(test_id):
     user_id = current_user.get_id()
-    max_score = loaded_tests[test_id].max_score
+    max_score = Test(test_id).max_score
     real_score = 0
     for _, s in filter(lambda x: x[0][0] == user_id and x[0][1] == test_id, saved_answers.items()):
         real_score += s.get_score()
@@ -324,7 +338,6 @@ def test_creator(exercise: int):
 
 
 if __name__ == '__main__':
-    loaded_tests: dict[int, Test] = dict()  # {test_id: Test}
     saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
     info('connecting to database...')
@@ -336,5 +349,5 @@ if __name__ == '__main__':
 
     app.run()
     print(saved_answers)
-    
+
     _ = warning, critical  # просто так надо
