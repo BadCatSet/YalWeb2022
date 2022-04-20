@@ -31,6 +31,7 @@ def construct_select(con: Con, base_table: str, fields: List[str] = None, where:
 
 
 def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
+    cur = con.cursor()
     fields = list()
     args = list()
     for k, v in values.items():
@@ -40,8 +41,9 @@ def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
 
     call = f"""INSERT INTO {base_table} ({', '.join(fields)}) VALUES ({', '.join('?' * len(args))})"""
 
-    con.execute(call, args)
+    cur.execute(call, args)
     con.commit()
+    return cur.lastrowid
 
 
 def get_tests(con: Con, test_id=None, owner_id=None):
@@ -75,7 +77,7 @@ def add_user(con: Con, email: str, password: str, username: str = None):
         'password_h': hasher(password),
         'username': username
     }
-    construct_insert(con, 'users', attrs)
+    return construct_insert(con, 'users', attrs)
 
 
 def add_result(con: Con, user_id, test_id, real_score, max_score):
@@ -85,10 +87,18 @@ def add_result(con: Con, user_id, test_id, real_score, max_score):
         'real_score': real_score,
         'max_score': max_score
     }
-    construct_insert(con, 'results', attrs)
+    return construct_insert(con, 'results', attrs)
 
 
-def init_database(con):
+def add_test(con: Con, test_id=None,owner_id=None):
+    attrs = {
+        'test_id': test_id,
+        'owner_id': owner_id
+    }
+    return construct_insert(con, 'tests', attrs)
+
+
+def init_database(con: Con):
     s = """PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
 
