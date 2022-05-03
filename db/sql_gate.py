@@ -60,7 +60,7 @@ def get_tests(con: Con, test_id=None, owner_id=None):
 def get_users(con: Con, user_id=None, email=None, password: str = None):
     """
     :param con: Connection
-    :param user_id: id
+    :param user_id: user_id
     :param email: email
     :param password: password(not hashed)
     :return: users by args
@@ -69,6 +69,18 @@ def get_users(con: Con, user_id=None, email=None, password: str = None):
              'email': email,
              'password_h': hasher(password) if nn(password) else None}
     return construct_select(con, 'users', where=attrs).fetchall()
+
+
+def get_results(con: Con, user_id=None, test_id=None):
+    """
+    :param con: Connection
+    :param user_id: user_id
+    :param test_id: test_id
+    :return: results by args
+    """
+    attrs = {'user_id': user_id,
+             'test_id': test_id}
+    return construct_select(con, 'results', where=attrs).fetchall()
 
 
 def add_user(con: Con, email: str, password: str, username: str = None):
@@ -90,7 +102,7 @@ def add_result(con: Con, user_id, test_id, real_score, max_score):
     return construct_insert(con, 'results', attrs)
 
 
-def add_test(con: Con, test_id=None,owner_id=None):
+def add_test(con: Con, test_id=None, owner_id=None):
     attrs = {
         'test_id': test_id,
         'owner_id': owner_id

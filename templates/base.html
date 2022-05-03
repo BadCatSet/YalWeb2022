@@ -22,10 +22,12 @@
             <table>
               <tr>
                 <td>
-                  <div>Вы вошли как {{ current_user.username }}</div>
+                  <div>
+                    Вы вошли как {{ current_user.username }}
+                  </div>
                 </td>
                 <td>
-                  <>
+                  <a class="btn btn-warning" href="/view_tests">Мои тесты</a>
                 </td>
                 <td>
                   <a class="btn btn-danger" href="/logout">Выйти</a>
@@ -34,7 +36,7 @@
             </table>
           {% else %}
             <p>
-              <a class="btn btn-primary " href="/signup">Зарегистрироваться</a>
+              <a class="btn btn-primary" href="/signup">Зарегистрироваться</a>
               <a class="btn btn-success" href="/login">Войти</a>
             </p>
           {% endif %}

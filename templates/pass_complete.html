@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <div class='div div-accent'>
+    Всего баллов: {{ max_score }}<br>
+    Набрано: {{ score }}<br>
+    Процент выполнения: {{ procentage }}
+  </div>
+
+  <a class='btn btn-primary' href="/">На главную</a>
+
+{% endblock %}

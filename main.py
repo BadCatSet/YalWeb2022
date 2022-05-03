@@ -1,11 +1,10 @@
 import datetime
 import json
 import logging
-import os
-from logging import critical, debug, error, info, warning
+from logging import debug, error, info
 import os
 import sqlite3
-from typing import Any
+from typing import Any, Literal
 
 from flask import Flask, flash, redirect, render_template, request
 from flask_login import LoginManager, current_user, login_required, login_user, \
@@ -14,7 +13,7 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from db import sql_gate
 from forms.login import LoginForm
 from forms.new_test import newTestForm
-from forms.pass_all import PassStartForm, TaskInputForm
+from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form
 from forms.signup import SignupForm
 
 logging.basicConfig(
@@ -69,6 +68,7 @@ class User:
 
 class Task:
     actual_version: int
+    correct_answer: Any
 
     def __init__(self, data, score, version):
 
@@ -84,16 +84,35 @@ class Task:
             version += 1
         return content
 
+    def get_empty_answer(self):
+        raise NotImplementedError
+
     def __repr__(self):
         return str(self.__dict__)
 
 
 class TaskInput(Task):
     actual_version = 1
+    text: str
+    answer_type: Literal['int', 'float', 'str']
+    correct_answer: int | float | str
+
+    def get_empty_answer(self):
+        return ''
 
 
 class TaskChoice(Task):
     actual_version = 1
+    text: str
+    items: list[str]
+    correct_answer: str
+
+    def __init__(self, data, score, version):
+        super().__init__(data, score, version)
+        self.form = get_task_choice_form(tuple(self.items))
+
+    def get_empty_answer(self):
+        return self.items[0]
 
 
 class Test:
@@ -117,7 +136,7 @@ class Test:
 
     def _init_from_file(self, test_id):
         self.test_id = test_id
-        self.tasks = []
+        self.tasks: list[Task] = []
         self.max_score = 0
 
         with open(f'tests_data/{test_id}.json', encoding='utf-8') as file:
@@ -141,17 +160,33 @@ class Test:
     def match_id(self, other_test_id):
         return self.test_id == other_test_id
 
-    def get_task(self, number):
+    def get_task(self, number) -> Any:
         return self.tasks[number]
 
     def task_names(self):
-        return list(map(lambda x: int(x) + 1, range(len(self.tasks))))
+        ln = len(self.tasks)
+        return range(1, ln + 1)
 
 
 class SavedAnswer:
-    def __init__(self, task):
-        self.task = task
-        self.answer: Any = None
+    _loaded = {}
+
+    def __new__(cls, test_id, exercise_number, user_id):
+        item_id = test_id, exercise_number, user_id
+        if (res := cls._loaded.get(item_id)) is not None:
+            return res
+
+        res = super().__new__(cls)
+        cls._loaded[item_id] = res
+        res.__init__(test_id, exercise_number, user_id)
+        return res
+
+    def __init__(self, test_id, exercise_number, user_id):
+        self.test_id = test_id
+        self.exercise_number = exercise_number
+        self.user_id = user_id
+        self.task = Test(test_id).get_task(exercise_number)
+        self.answer: Any = self.task.get_empty_answer()
 
     def set(self, answer):
         self.answer = answer
@@ -159,8 +194,19 @@ class SavedAnswer:
     def get_score(self):
         return self.task.score * (self.task.correct_answer == self.answer)
 
+    @classmethod
+    def get_loaded(cls):
+        return cls._loaded
+
+    def kill(self):
+        self._loaded.pop((self.test_id, self.exercise_number, self.user_id))
+
     def __repr__(self):
-        return f'SavedAnswer for:\ntask: {self.task}\nanswer: {self.answer}'
+        return f'[SavedAnswer for:\ntask: {self.task}\nanswer: {self.answer}]'
+
+    @property
+    def loaded(self):
+        return self._loaded
 
 
 @login_manager.user_loader
@@ -268,8 +314,9 @@ def view_test(test_id):
 @app.route('/pass/<int:test_id>', methods=['GET', 'POST'])
 @login_required
 def pass_start(test_id):
-    if not current_user.is_authenticated:
-        return redirect('/login')
+    if sql_gate.get_results(con, user_id=current_user.get_id(), test_id=test_id):
+        return redirect(f'/pass/{test_id}/complete')
+
     form = PassStartForm()
     if form.validate_on_submit():
         return redirect(f'/pass/{test_id}/1')
@@ -282,49 +329,85 @@ def pass_start(test_id):
 @app.route('/pass/<int:test_id>/<int:exercise_number>', methods=['GET', 'POST'])
 @login_required
 def pass_handler(test_id, exercise_number):
+    if sql_gate.get_results(con, user_id=current_user.get_id(), test_id=test_id):
+        return redirect(f'/pass/{test_id}/complete')
     exercise_number -= 1
-    if not current_user.is_authenticated:
-        return redirect('/login')
-    item_id = current_user.get_id(), test_id, exercise_number
-
-    current_test = Test(test_id)
-
-    if item_id not in saved_answers:
-        saved_answers[item_id] = SavedAnswer(current_test.get_task(exercise_number))
-    task_names = current_test.task_names()
 
     if isinstance(Test(test_id).get_task(exercise_number), TaskInput):
-        return pass_input(test_id, exercise_number, task_names)
+        return pass_input(test_id, exercise_number)
+    if isinstance(Test(test_id).get_task(exercise_number), TaskChoice):
+        return pass_choice(test_id, exercise_number)
 
 
-def pass_input(test_id, exercise_number, task_names):
-    item_id = current_user.get_id(), test_id, exercise_number
+def pass_input(test_id, exercise_number):
+    task_names = Test(test_id).task_names()
+    user_id = current_user.get_id()
 
     form = TaskInputForm()
     if form.validate_on_submit():
-        answer = form.data['answer']  # TODO
-        saved_answers[item_id].set(answer)
+        answer = form.data['answer']
+        SavedAnswer(test_id, exercise_number, user_id).set(answer)
 
-    task = Test(test_id).get_task(exercise_number)
+    task: TaskInput = Test(test_id).get_task(exercise_number)
 
     return render_template('pass_input.html',
                            title='тест',
-                           condition=task.text,
-                           form=form,
+
                            task_names=task_names,
-                           test_id=test_id)
+                           test_id=test_id,
+
+                           condition=task.text,
+                           form=form)
+
+
+def pass_choice(test_id, exercise_number):
+    task_names = Test(test_id).task_names()
+    user_id = current_user.get_id()
+
+    task = Test(test_id).get_task(exercise_number)
+
+    form = task.form()
+    if form.validate_on_submit():
+        SavedAnswer(test_id, exercise_number, user_id).set(form.data['task_choice'])
+
+    checked = SavedAnswer(test_id, exercise_number, user_id).answer
+    form.task_choice.default = checked
+    return render_template('pass_choice.html',
+                           title='тест',
+
+                           task_names=task_names,
+                           test_id=test_id,
+
+                           condition=task.text,
+                           form=form)
 
 
 @app.route("/pass/<int:test_id>/complete")
 @login_required
 def pass_complete(test_id):
     user_id = current_user.get_id()
-    max_score = Test(test_id).max_score
-    real_score = 0
-    for _, s in filter(lambda x: x[0][0] == user_id and x[0][1] == test_id, saved_answers.items()):
-        real_score += s.get_score()
-    sql_gate.add_result(con, user_id, test_id, real_score, max_score)
-    return redirect('/')
+    results = sql_gate.get_results(con, user_id=user_id, test_id=test_id)
+
+    if not results:
+        to_kill = []
+        max_score = Test(test_id).max_score
+        real_score = 0
+        for (a_test_id, _, a_user_id), answer in SavedAnswer.get_loaded().items():
+            if a_user_id == user_id and a_test_id == test_id:
+                real_score += answer.get_score()
+                to_kill.append(answer)
+        for i in to_kill:
+            i.kill()
+        sql_gate.add_result(con, user_id, test_id, real_score, max_score)
+        results = test_id, user_id, real_score, max_score
+    else:
+        results = results[-1]
+    return render_template('pass_complete.html',
+                           title='результаты',
+
+                           score=results[2],
+                           max_score=results[3],
+                           procentage=f'{results[2] / results[3]:.0%}')
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
@@ -348,7 +431,6 @@ def test_creator(exercise: int):
 
 
 if __name__ == '__main__':
-    saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
@@ -358,6 +440,3 @@ if __name__ == '__main__':
     info('...connected successful')
 
     app.run()
-    print(saved_answers)
-
-    _ = warning, critical  # просто так надо
