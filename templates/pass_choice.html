@@ -4,19 +4,13 @@
 
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
-    <p>
+
     <div class="div div-accent">
       {{ condition }}
     </div>
 
-
-    <p>
-      {{ form.answer(class="form-control", placeholder=form.answer.label.text) }}
-      {% for error in form.answer.errors %}
-        <div class="alert alert-danger" role="alert">
-          {{ error }}
-        </div>
-      {% endfor %}
+    <div>{{ form.task_choice }}
+    </div>
 
     <p>
       {{ form.submit(type="submit", class="btn btn-primary") }}
