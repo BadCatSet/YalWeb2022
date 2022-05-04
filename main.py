@@ -7,7 +7,7 @@ import os
 import sqlite3
 from typing import Any, Literal
 
-from flask import Flask, flash, redirect, render_template, request
+from flask import Flask, redirect, render_template, request
 
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
@@ -15,8 +15,7 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from db import sql_gate
 
 from forms.login import LoginForm
-from forms.new_test import newTestForm
-from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form
+from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, get_task_multy_choice_form
 from forms.signup import SignupForm
 from forms.test_creator import NewTestForm, SUBJECTS
 
@@ -126,10 +125,17 @@ class TaskMultyChoice(Task):
     items: list[str]
     correct_answer: list[str]
 
+    def __init__(self, data, score, version):
+        super().__init__(data, score, version)
+        self.form = get_task_multy_choice_form(tuple(self.items))
+
+    def get_empty_answer(self):
+        return list()
+
 
 class Test:
     _loaded = {}
-    task_dict = {'input': TaskInput, 'choice': TaskChoice}
+    task_dict = {'input': TaskInput, 'choice': TaskChoice, 'multy_choice': TaskMultyChoice}
 
     def __new__(cls, test_id: int = 'new_test'):
         if test_id == 'new_test':
@@ -285,27 +291,16 @@ def signup():
                            title='Регистрация',
                            form=form)
 
-    try:
-        if request.values['contact']:
-            f = request.values['contact']
-            print(f)
-            return render_template('/multy_choice.html')
-    except BaseException:
-        return render_template('/multy_choice.html')
-
-    if request.method == 'GET':
-        return render_template('multy_choice.html')
-
 
 def radio_btn(test_id, exercise_number, task_names):
-    item_id = current_user.get_id(), test_id, exercise_number
+    user_id = current_user.get_id()
 
     form = TaskInputForm()
     if form.validate_on_submit():
         answer = form.data['answer']
-        saved_answers[item_id].set(answer)
+        SavedAnswer(test_id, exercise_number, user_id).set(answer)
 
-    task = loaded_tests[test_id].get_task(exercise_number)
+    task = Test(test_id).get_task(exercise_number)
 
     return render_template('multy_choice.html',
                            title='тест',
@@ -374,8 +369,9 @@ def pass_handler(test_id, exercise_number):
         return pass_input(test_id, exercise_number)
     if isinstance(Test(test_id).get_task(exercise_number), TaskChoice):
         return pass_choice(test_id, exercise_number)
-    if isinstance(loaded_tests[test_id].get_task(exercise_number), TaskMultyChoice):
-        return pass_input(test_id, exercise_number, task_names)
+    if isinstance(Test(test_id).get_task(exercise_number), TaskMultyChoice):
+        return pass_multy_choice(test_id, exercise_number)
+
 
 def pass_input(test_id, exercise_number):
     task_names = Test(test_id).task_names()
@@ -420,16 +416,28 @@ def pass_choice(test_id, exercise_number):
                            form=form)
 
 
-def pass_multy_choice(test_id, exercise_number, task_names):
-    item_id = current_user.get_id(), test_id, exercise_number
+def pass_multy_choice(test_id, exercise_number):
+    task_names = Test(test_id).task_names()
+    user_id = current_user.get_id()
 
-    task: TaskMultyChoice = loaded_tests[test_id].get_task(exercise_number)
+    task = Test(test_id).get_task(exercise_number)
+
+    form = task.form()
+    if form.validate_on_submit():
+        a = form.data['task_choice']
+        b = SavedAnswer(test_id, exercise_number, user_id)
+        b.set(a)
+    checked = SavedAnswer(test_id, exercise_number, user_id).answer
+    form.task_choice.default = checked
     return render_template('multy_choice.html',
                            title='тест',
-                           condition=task.text,
+
                            task_names=task_names,
                            test_id=test_id,
-                           count=task.items)
+
+                           condition=task.text,
+                           form=form,
+                           )
 
 
 @app.route("/pass/<int:test_id>/complete")
@@ -484,5 +492,3 @@ if __name__ == '__main__':
     info('...connected successful')
 
     app.run()
-
-    print(saved_answers)
