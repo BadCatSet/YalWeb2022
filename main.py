@@ -96,6 +96,13 @@ class TaskChoice(Task):
     actual_version = 1
 
 
+class TaskMultyChoice(Task):
+    actual_version = 1
+    text: str
+    items: list[str]
+    correct_answer: list[str]
+
+
 class Test:
     task_dict = {'input': TaskInput}
 
@@ -165,7 +172,8 @@ def logout():
 def personal_account():
     if request.method == 'GET':
         if f'{current_user.get_id()}.png' in os.listdir('static/img'):
-            return render_template('personal_account.html', title='YalWeb2022', flag=True, name=f'static/img/{current_user.get_id()}.png')
+            return render_template('personal_account.html', title='YalWeb2022', flag=True,
+                                   name=f'static/img/{current_user.get_id()}.png')
         else:
             return render_template('personal_account.html', title='YalWeb2022', flag=False)
 
@@ -209,6 +217,35 @@ def signup():
     return render_template('signup.html',
                            title='Регистрация',
                            form=form)
+
+    try:
+        if request.values['contact']:
+            f = request.values['contact']
+            print(f)
+            return render_template('/multy_choice.html')
+    except BaseException:
+        return render_template('/multy_choice.html')
+
+    if request.method == 'GET':
+        return render_template('multy_choice.html')
+
+
+def radio_btn(test_id, exercise_number, task_names):
+    item_id = current_user.get_id(), test_id, exercise_number
+
+    form = TaskInputForm()
+    if form.validate_on_submit():
+        answer = form.data['answer']
+        saved_answers[item_id].set(answer)
+
+    task = loaded_tests[test_id].get_task(exercise_number)
+
+    return render_template('multy_choice.html',
+                           title='тест',
+                           condition=task.text,
+                           form=form,
+                           task_names=task_names,
+                           test_id=test_id)
 
 
 @app.route('/view_tests', methods=['GET'])
@@ -262,8 +299,6 @@ def pass_start(test_id):
 @login_required
 def pass_handler(test_id, exercise_number):
     exercise_number -= 1
-    if not current_user.is_authenticated:
-        return redirect('/login')
     item_id = current_user.get_id(), test_id, exercise_number
 
     if test_id not in loaded_tests:
@@ -275,6 +310,9 @@ def pass_handler(test_id, exercise_number):
     task_names = current_test.task_names()
 
     if isinstance(loaded_tests[test_id].get_task(exercise_number), TaskInput):
+        return pass_input(test_id, exercise_number, task_names)
+
+    if isinstance(loaded_tests[test_id].get_task(exercise_number), TaskMultyChoice):
         return pass_input(test_id, exercise_number, task_names)
 
 
@@ -294,6 +332,18 @@ def pass_input(test_id, exercise_number, task_names):
                            form=form,
                            task_names=task_names,
                            test_id=test_id)
+
+
+def pass_multy_choice(test_id, exercise_number, task_names):
+    item_id = current_user.get_id(), test_id, exercise_number
+
+    task: TaskMultyChoice = loaded_tests[test_id].get_task(exercise_number)
+    return render_template('multy_choice.html',
+                           title='тест',
+                           condition=task.text,
+                           task_names=task_names,
+                           test_id=test_id,
+                           count=task.items)
 
 
 @app.route("/pass/<int:test_id>/complete")
@@ -341,5 +391,5 @@ if __name__ == '__main__':
 
     app.run()
     print(saved_answers)
-    
+
     _ = warning, critical  # просто так надо

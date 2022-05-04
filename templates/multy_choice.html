@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form  method="post" action=".">
+{% for item in count %}
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="{{ item }}" name="answer" value="{{ item }}">
+      <label for="{{ item }}">{{item}}</label>
+    </div>
+    {% endfor %}
+    <div>
+      <button type="submit" class="btn btn-primary">Submit form</button>
+    </div>
+</form>
+{% endblock %}
