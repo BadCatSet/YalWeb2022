@@ -1,1 +1,43 @@
 {% extends "base.html" %}
+{% block content %}
+    <br><br>
+    <form id="newTestForm" action method="post" novalidate>
+        <div class="mb-3">
+            {{ form.test_name(placeholder=form.get_placeholder(form.test_name),
+                    class="form-control") }}
+            <br><br>
+            {{ form.subject(class="form-select") }}
+            <br><br>
+        </div>
+
+        {# Вопросы #}
+
+        <table>
+            <tr>
+                {% for i in range(1, max_question + 1) %}
+                    <td>
+                    <span class="span span-task-pick">
+                        {% if i != question %}
+                            <a class="a a-task-pick"
+                               href="/test_creator?question={{ i }}&max_question={{ max_question }}">{{ i }}</a>
+                        {% else %}
+                            <a id="a-task-pick">{{ i }}</a>
+                        {% endif %}
+                    </span>
+                    </td>
+                {% endfor %}
+                <td>
+            <span class="span span-task-pick">
+                <a class="a a-task-pick"
+                   href="/test_creator?question={{ max_question + 1 }}&max_question={{ max_question + 1 }}">+</a>
+            </span>
+                </td>
+            </tr>
+        </table>
+
+        {# Вопросы #}
+        <br><br>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+
+{% endblock %}
