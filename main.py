@@ -1,26 +1,26 @@
 import datetime
 import json
-import logging
-from logging import critical, debug, error, info, warning
 import sqlite3
+from logging import critical, debug, error, info, warning
 from typing import Any
 
-from flask import Flask, redirect, render_template, flash
+from flask import Flask, redirect, render_template, request
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 
 from db import sql_gate
 from forms.login import LoginForm
-from forms.new_test import newTestForm
 from forms.pass_all import PassStartForm, TaskInputForm
 from forms.signup import SignupForm
+from forms.test_creator import NewTestForm
+from forms.test_creator import SUBJECTS
 
-logging.basicConfig(
-    filename='log.log',
-    format='%(levelname)s %(asctime)s %(name)s >>> %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG,
-    encoding='utf-8')
+# logging.basicConfig(
+#     filename='log.log',
+#     format='%(levelname)s %(asctime)s %(name)s >>> %(message)s',
+#     datefmt='%Y-%m-%d %H:%M:%S',
+#     level=logging.DEBUG,
+#     encoding='utf-8')
 info('--- starting app -----------------------------------------')
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'password_is_eight_asterisks'
@@ -76,7 +76,8 @@ class Task:
         self.__dict__.update(data)
         self.score = score
 
-    # сделаю по мере необходимости в конкретных заданиях, так же нужна функция для обновления данных в бд
+    # сделаю по мере необходимости в конкретных заданиях,
+    # так же нужна функция для обновления данных в бд
     def update_data_version(self, content, version):
         while version != self.actual_version:
             version += 1
@@ -253,31 +254,23 @@ def pass_complete(test_id):
 
 @app.route("/test_creator", methods=['GET', 'POST'])
 # @login_required
-def test_creator_start():
-    form = newTestForm()
+def test_creator():
+    form = NewTestForm()
+    question = request.args.get('question', default=1, type=int)
+    max_question = request.args.get('max_question',
+                                    default=(question if question > 10 else 10),
+                                    type=int)
     if form.validate_on_submit():
-        if form.test_name.data == '':
-            flash('Название теста не может быть пустым!')
-        else:
-            return redirect('/test_creator/1')
-    return render_template('test_creator_start.html',
-                           tilte='Конфигурация теста',
-                           form=form)
-
-
-@app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
-# @login_required
-def test_creator(exercise: int):
-    return render_template('test_creator.html', title=f"Создание теста/вопрос {exercise}")
+        # Save test
+        return redirect('/')
+    return render_template("test_creator.html", subjects=SUBJECTS, question=question,
+                           max_question=max_question, form=form)
 
 
 if __name__ == '__main__':
-    loaded_tests = {}  # {test_id: Test}
-    saved_answers = {}  # {(user_id, test_id): {exercise_number: answer}}
-    # dict[(int, int):dict[int:SavedAnswer]]
-
     loaded_tests: dict[int, Test] = dict()  # {test_id: Test}
-    saved_answers: dict[tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
+    saved_answers: dict[
+        tuple[int, int, int], SavedAnswer] = dict()  # {(user_id, test_id, exercise_number):  answer}
 
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)

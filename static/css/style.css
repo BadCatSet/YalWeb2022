@@ -20,7 +20,6 @@ body {
     background-color: #202225;
 }
 
-
 .navbar-dark {
     background-color: rgb(32, 34, 37);
 }
@@ -51,4 +50,21 @@ body {
     width: 50%;
     margin-left: auto;
     margin-right: auto;
+}
+
+#h1TestCreator {
+    color: #ffffff;
+    font-size: 48px;
+    text-align: center;
+}
+
+#saveButton {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#a-task-pick {
+    color: #1d45b6;
+    text-decoration: none;
+    font-size: 25px;
 }
