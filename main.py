@@ -1,5 +1,6 @@
 import datetime
 import json
+
 import logging
 from logging import debug, error, info
 import os
@@ -7,14 +8,17 @@ import sqlite3
 from typing import Any, Literal
 
 from flask import Flask, flash, redirect, render_template, request
+
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 
 from db import sql_gate
+
 from forms.login import LoginForm
 from forms.new_test import newTestForm
 from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form
 from forms.signup import SignupForm
+from forms.test_creator import NewTestForm, SUBJECTS
 
 logging.basicConfig(
     filename='log.log',
@@ -78,7 +82,8 @@ class Task:
         self.__dict__.update(data)
         self.score = score
 
-    # сделаю по мере необходимости в конкретных заданиях, так же нужна функция для обновления данных в бд
+    # сделаю по мере необходимости в конкретных заданиях,
+    # так же нужна функция для обновления данных в бд
     def update_data_version(self, content, version):
         while version != self.actual_version:
             version += 1
@@ -412,26 +417,20 @@ def pass_complete(test_id):
 
 @app.route("/test_creator", methods=['GET', 'POST'])
 @login_required
-def test_creator_start():
-    form = newTestForm()
+def test_creator():
+    form = NewTestForm()
+    question = request.args.get('question', default=1, type=int)
+    max_question = request.args.get('max_question',
+                                    default=(question if question > 10 else 10),
+                                    type=int)
     if form.validate_on_submit():
-        if form.test_name.data == '':
-            flash('Название теста не может быть пустым!')
-        else:
-            return redirect('/test_creator/1')
-    return render_template('test_creator_start.html',
-                           tilte='Конфигурация теста',
-                           form=form)
-
-
-@app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
-@login_required
-def test_creator(exercise: int):
-    return render_template('test_creator.html', title=f"Создание теста/вопрос {exercise}")
+        # Save test
+        return redirect('/')
+    return render_template("test_creator.html", subjects=SUBJECTS, question=question,
+                           max_question=max_question, form=form)
 
 
 if __name__ == '__main__':
-
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
     sql_gate.init_database(con)
