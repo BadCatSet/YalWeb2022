@@ -1,0 +1,20 @@
+{% extends "pass_base.html" %}
+
+{% block sub_content %}
+
+  <form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="div div-accent">
+      {{ condition }}
+    </div>
+
+    <div>{{ form.task_choice }}
+    </div>
+
+    <p>
+      {{ form.submit(type="submit", class="btn btn-primary") }}
+    </p>
+  </form>
+
+{% endblock %}
