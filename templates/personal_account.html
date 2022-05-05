@@ -101,8 +101,8 @@ color: rgb(255,255,255);
 </form>
 
 <form class="login_form" method="post">
-<input type="email" class="form-control form-control-lg" id="leftcol5" aria-describedby="emailHelp" placeholder="{{ current_user.email }}" name="email">
-<input type="text" class="form-control form-control-lg" id="leftcol4" placeholder="{{ current_user.username }}" name="text">
+<input type="email" class="form-control form-control-lg" id="leftcol5" aria-describedby="emailHelp" value="{{ current_user.email }}" name="email">
+<input type="text" class="form-control form-control-lg" id="leftcol4" value="{{ current_user.username }}" name="text">
 <button type="submit"  id="btn2" class="btn btn-outline-secondary btn-lg">Отправить</button>
 </form>
 <h2 id="word">Ваши данные:</h2>
