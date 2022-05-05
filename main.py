@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 from logging import debug, error, info
+from pprint import pprint
 from typing import Any, Literal
 
 from flask import Flask, redirect, render_template, request
@@ -14,10 +15,11 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from db import sql_gate
 from forms.login import LoginForm
 
-from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, get_task_multy_choice_form
+from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, \
+    get_task_multy_choice_form
 
 from forms.signup import SignupForm
-from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS
+from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS, get_editor_input_form
 
 logging.basicConfig(
     filename='log.log',
@@ -230,6 +232,10 @@ class SavedAnswer:
     @property
     def loaded(self):
         return self._loaded
+
+
+class CreatingTest(Test):
+    _loaded = dict()
 
 
 @login_manager.user_loader
@@ -455,6 +461,7 @@ def pass_multy_choice(test_id, exercise_number):
 @app.route("/pass/<int:test_id>/complete")
 @login_required
 def pass_complete(test_id):
+    print(CreatingTest._loaded)
     user_id = current_user.get_id()
     results = sql_gate.get_results(con, user_id=user_id, test_id=test_id)
 
@@ -492,9 +499,33 @@ def test_creator():
         # Save test
         return redirect('/')
     print(form.type_of_test.data)
+
     return render_template("test_creator.html", subjects=SUBJECTS, question=question,
                            max_question=max_question, form=form,
-                           type_of_test=TYPES_OF_QUESTIONS[2])
+                           type_of_test=TYPES_OF_QUESTIONS[2], )
+
+
+fm_input: Any = None
+fm_choice: Any = None
+fm_multy_choice: Any = None
+
+
+@app.route("/test_creator2", methods=["GET", "POST"])
+def test_creator2():
+    global fm
+
+    if fm is None:
+        fm = get_editor_input_form(5)
+    form = fm()
+    # if form.validate_on_submit():
+    to_render = []
+    for k, v in form.__dict__.items():
+        if k.startswith("task_button_"):
+            to_render.append(v)
+    task_type = 'input'
+
+    return render_template('test_creator2.html', form=form, to_render=to_render, task_type=task_type,
+                           current_task_type=TYPES_OF_QUESTIONS[task_type])
 
 
 if __name__ == '__main__':
