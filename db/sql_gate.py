@@ -35,12 +35,24 @@ def construct_insert(con: Con, base_table: str, values: dict[str, Any] = None):
     fields = list()
     args = list()
     for k, v in values.items():
-        if v is not None:
+        if nn(v):
             fields.append(k)
             args.append(v)
 
     call = f"""INSERT INTO {base_table} ({', '.join(fields)}) VALUES ({', '.join('?' * len(args))})"""
 
+    cur.execute(call, args)
+    con.commit()
+    return cur.lastrowid
+
+
+def construct_update(con: Con, base_table: str, fields: dict, where: dict):
+    args = list()
+    call = f"""UPDATE {base_table} SET """
+    call += ', '.join([(f"""{k} = ?""", args.append(v))[0] for k, v in fields.items() if nn(v)])
+    call += """ WHERE """
+    call += ', '.join([(f"""{k} = ?""", args.append(v))[0] for k, v in where.items() if nn(v)])
+    cur = con.cursor()
     cur.execute(call, args)
     con.commit()
     return cur.lastrowid
@@ -108,6 +120,12 @@ def add_test(con: Con, test_id=None, owner_id=None):
         'owner_id': owner_id
     }
     return construct_insert(con, 'tests', attrs)
+
+
+def update_user(con: Con, user_id, new_email=None, new_username=None):
+    attrs = {'email': new_email,
+             'username': new_username}
+    return construct_update(con, 'users', attrs, {'id': user_id})
 
 
 def init_database(con: Con):

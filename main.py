@@ -153,6 +153,8 @@ class Test:
         return test
 
     def _init_from_file(self, test_id):
+        data = sql_gate.get_tests(con, test_id)
+        self.name = data[0][2]
         self.test_id = test_id
         self.tasks: list[Task] = []
         self.max_score = 0
