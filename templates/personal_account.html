@@ -5,24 +5,23 @@
 #box {
 position: absolute;
 width:40%;
-height:290px;
-background-color:#78866b;
+height:310px;
+background-color: rgb(24,25,28);
 padding: 20px; /* Поля вокруг текста */
-border-radius: 20px;
+border-radius: 5px;
 margin-top: 4%;
 margin-left: 36%;
-box-shadow: 0px 0px 15px 1px #78866b;}
-
+}
 #box2 {
 position: absolute;
 width:20%;
 height:35%;
-background-color:#78866b;
+background-color: rgb(24,25,28);
 padding: 20px; /* Поля вокруг текста */
-border-radius: 20px;
+border-radius: 5px;
 margin-top: 5%;
 margin-left: 10%;
-box-shadow: 0px 0px 15px 1px #78866b;}
+}
 
 
 #img {
@@ -41,7 +40,7 @@ margin-left: 9%;}
     margin-top: 15%;
     position: absolute; /* Абсолютное позиционирование */
     width: 550px; /* Ширина левой колонки */
-    background-color:#ffd8b4;
+    background-color: rgb(64,68,75);
 
    }
 #leftcol5 {
@@ -49,8 +48,8 @@ margin-left: 9%;}
     margin-top: 9%;
     position: absolute; /* Абсолютное позиционирование */
     width: 550px; /* Ширина левой колонки */
-    background-color:#ffd8b4;
-
+    background-color: rgb(64,68,75);
+    color; rgb(255,255,255);
    }
 
 .form-group{
@@ -81,29 +80,32 @@ color: rgb(255,255,255);
 #btn2{
 position: absolute;
 margin-left: 60%;
-margin-top:27%;
+margin-top: 20%;
 color: rgb(255,255,255);
 }
- </style>
+
+</style>
 <div id="box"></div>
 <div id="box2"></div>
 {% if flag %}
 
-        <img src="{{ name }}" id="img"
-           alt="здесь должна была быть картинка, но не нашлась" width="500" height="377">
+<img src="{{ name }}" id="img"
+     alt="здесь должна была быть картинка, но не нашлась" width="500" height="377">
 
- {% endif %}
+{% endif %}
 <form method="post" enctype="multipart/form-data">
     <div class="form-group">
-    <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image">
+        <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image">
     </div>
     <button type="submit" id="btn" class="btn btn-outline-secondary btn-lg">Отправить</button>
 </form>
 
 <form class="login_form" method="post">
-<input type="email" class="form-control form-control-lg" id="leftcol5" aria-describedby="emailHelp" value="{{ current_user.email }}" name="email">
-<input type="text" class="form-control form-control-lg" id="leftcol4" value="{{ current_user.username }}" name="text">
-<button type="submit"  id="btn2" class="btn btn-outline-secondary btn-lg">Отправить</button>
+    <input type="email" class="form-control form-control-lg" id="leftcol5" aria-describedby="emailHelp"
+           value="{{ current_user.email }}" name="email">
+    <input type="text" class="form-control form-control-lg" id="leftcol4" value="{{ current_user.username }}"
+           name="text">
+    <button type="submit" id="btn2" class="btn btn-outline-secondary btn-lg">Отправить</button>
 </form>
 <h2 id="word">Ваши данные:</h2>
 <h4 id="ph">Фотография</h4>
