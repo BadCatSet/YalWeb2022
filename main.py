@@ -1,10 +1,9 @@
 import datetime
 import json
-
 import logging
-from logging import debug, error, info
 import os
 import sqlite3
+from logging import debug, error, info
 from typing import Any, Literal
 
 from flask import Flask, redirect, render_template, request
@@ -13,11 +12,12 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
     logout_user
 
 from db import sql_gate
-
 from forms.login import LoginForm
+
 from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, get_task_multy_choice_form
+
 from forms.signup import SignupForm
-from forms.test_creator import NewTestForm, SUBJECTS
+from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS
 
 logging.basicConfig(
     filename='log.log',
@@ -481,7 +481,7 @@ def pass_complete(test_id):
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
-@login_required
+# @login_required
 def test_creator():
     form = NewTestForm()
     question = request.args.get('question', default=1, type=int)
@@ -491,8 +491,10 @@ def test_creator():
     if form.validate_on_submit():
         # Save test
         return redirect('/')
+    print(form.type_of_test.data)
     return render_template("test_creator.html", subjects=SUBJECTS, question=question,
-                           max_question=max_question, form=form)
+                           max_question=max_question, form=form,
+                           type_of_test=TYPES_OF_QUESTIONS[2])
 
 
 if __name__ == '__main__':

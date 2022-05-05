@@ -1,3 +1,8 @@
+{% set types = (
+    "Ввод ответа в текстовой или числовой форме",
+    "Выбор из нескольких вариантов ответа",
+    "Выбор нескольких вариантов из списка"
+) %}
 {% extends "base.html" %}
 {% block content %}
     <br><br>
@@ -11,30 +16,55 @@
         </div>
 
         {# Вопросы #}
-
         <table>
             <tr>
                 {% for i in range(1, max_question + 1) %}
                     <td>
-                    <span class="span span-task-pick">
-                        {% if i != question %}
-                            <a class="a a-task-pick"
-                               href="/test_creator?question={{ i }}&max_question={{ max_question }}">{{ i }}</a>
-                        {% else %}
-                            <a id="a-task-pick">{{ i }}</a>
-                        {% endif %}
-                    </span>
+                        <span class="span span-task-pick">
+                            {% if i != question %}
+                                <a class="a a-task-pick"
+                                   href="/test_creator?question={{ i }}&max_question={{ max_question }}">{{ i }}</a>
+                            {% else %}
+                                <a id="a-task-pick">{{ i }}</a>
+                            {% endif %}
+                           </span>
                     </td>
                 {% endfor %}
                 <td>
-            <span class="span span-task-pick">
+                    <span class="span span-task-pick">
                 <a class="a a-task-pick"
                    href="/test_creator?question={{ max_question + 1 }}&max_question={{ max_question + 1 }}">+</a>
             </span>
                 </td>
             </tr>
         </table>
+        <br><br>
 
+        {% if type_of_test == types[0] %}
+            <form id="newTestForm" action method="post" novalidate>
+                <div class="mb-3">
+                    <input type="text" placeholder="Условие вопроса" class="form-control">
+                    <br>
+                    <input type="text" placeholder="Ответ" class="form-control">
+                </div>
+            </form>
+        {% elif type_of_test == types[1] or type_of_test == types[2] %}
+            <form id="newTestForm" action method="post" novalidate>
+                <div class="mb-3">
+                    <input type="text" placeholder="Условие вопроса" class="form-control">
+                    <br>
+                    <input class="form-control"
+                           placeholder="Новая строка - новый вариант ответа" readonly=true>
+                    <br>
+                    <textarea class="form-control"></textarea>
+                    <br>
+                    <input type="text" placeholder="Правильный ответ" class="form-control">
+                </div>
+            </form>
+        {% else %}
+            <input class="form-control"
+                   placeholder="Остальные варианты..." readonly=true>
+        {% endif %}
         {# Вопросы #}
         <br><br>
         {{ form.submit(class="btn btn-primary") }}
