@@ -14,12 +14,7 @@
     <title>{{ title }}</title>
   </head>
   <body>
-  <style>
-    body {
-    color: white;
-}
-  </style>
-    <nav class="navbar navbar-dark" style="background-color: rgb(62,62,62);">
+    <nav class="navbar navbar-dark">
       <div class="container-fluid">
         <a class="navbar-brand" href="/">YalWeb2022</a>
         <form class="d-flex">
@@ -38,10 +33,17 @@
               </tr>
             </table>
           {% else %}
-            <p>
-              <a class="btn btn-primary" href="/signup">Зарегистрироваться</a>
-              <a class="btn btn-success" href="/login">Войти</a>
-            </p>
+            <table>
+              <tr>
+                <td>
+
+                  <a class="btn btn-primary" href="/signup">Зарегистрироваться</a>
+                </td>
+                <td>
+                  <a class="btn btn-success" href="/login">Войти</a>
+                </td>
+              </tr>
+            </table>
           {% endif %}
         </form>
       </div>
