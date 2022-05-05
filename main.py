@@ -256,8 +256,16 @@ def personal_account():
             return render_template('personal_account.html', title='YalWeb2022', flag=False)
 
     elif request.method == 'POST':
-        f = request.files['file']
-        f.save(f'static/img/{current_user.get_id()}.png')
+        try:
+            User.email = request.form['email']
+            User.username = request.form['text']
+        except BaseException:
+            pass
+        try:
+            f = request.files['file']
+            f.save(f'static/img/{current_user.get_id()}.png')
+        except BaseException:
+            pass
         return render_template('personal_account.html', title='YalWeb2022', flag=True,
                                name=f'static/img/{current_user.get_id()}.png')
 
