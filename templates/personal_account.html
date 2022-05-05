@@ -38,7 +38,7 @@ margin-left: 9%;}
 
 #leftcol4 {
     margin-left: 38%;
-    margin-top: 9%;
+    margin-top: 15%;
     position: absolute; /* Абсолютное позиционирование */
     width: 550px; /* Ширина левой колонки */
     background-color:#ffd8b4;
@@ -46,7 +46,7 @@ margin-left: 9%;}
    }
 #leftcol5 {
     margin-left: 38%;
-    margin-top: 15%;
+    margin-top: 9%;
     position: absolute; /* Абсолютное позиционирование */
     width: 550px; /* Ширина левой колонки */
     background-color:#ffd8b4;
@@ -80,14 +80,13 @@ color: rgb(255,255,255);
 }
 #btn2{
 position: absolute;
-margin-left: 70%;
+margin-left: 60%;
 margin-top:27%;
+color: rgb(255,255,255);
 }
  </style>
 <div id="box"></div>
 <div id="box2"></div>
-<input class="form-control form-control-lg" id="leftcol5" type="text" placeholder="{{ current_user.email }}" aria-label=".form-control-lg example">
-<input class="form-control form-control-lg" id="leftcol4" type="text" placeholder="{{ current_user.username }}" aria-label=".form-control-lg example">
 {% if flag %}
 
         <img src="{{ name }}" id="img"
@@ -99,6 +98,12 @@ margin-top:27%;
     <input type="file" class="form-control-file" id="photo" name="file" multiple accept="image">
     </div>
     <button type="submit" id="btn" class="btn btn-outline-secondary btn-lg">Отправить</button>
+</form>
+
+<form class="login_form" method="post">
+<input type="email" class="form-control form-control-lg" id="leftcol5" aria-describedby="emailHelp" placeholder="{{ current_user.email }}" name="email">
+<input type="text" class="form-control form-control-lg" id="leftcol4" placeholder="{{ current_user.username }}" name="text">
+<button type="submit"  id="btn2" class="btn btn-outline-secondary btn-lg">Отправить</button>
 </form>
 <h2 id="word">Ваши данные:</h2>
 <h4 id="ph">Фотография</h4>
