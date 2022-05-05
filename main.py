@@ -1,20 +1,23 @@
 import datetime
 import json
 import logging
-from logging import debug, error, info
 import os
 import sqlite3
+from logging import debug, error, info
 from typing import Any, Literal
 
-from flask import Flask, flash, redirect, render_template, request
+from flask import Flask, redirect, render_template, request
+
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 
 from db import sql_gate
 from forms.login import LoginForm
-from forms.new_test import newTestForm
-from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form
+
+from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, get_task_multy_choice_form
+
 from forms.signup import SignupForm
+from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS
 
 logging.basicConfig(
     filename='log.log',
@@ -78,7 +81,8 @@ class Task:
         self.__dict__.update(data)
         self.score = score
 
-    # сделаю по мере необходимости в конкретных заданиях, так же нужна функция для обновления данных в бд
+    # сделаю по мере необходимости в конкретных заданиях,
+    # так же нужна функция для обновления данных в бд
     def update_data_version(self, content, version):
         while version != self.actual_version:
             version += 1
@@ -88,7 +92,7 @@ class Task:
         raise NotImplementedError
 
     def __repr__(self):
-        return str(self.__dict__)
+        return '<Task:' + str(self.__dict__) + '>'
 
 
 class TaskInput(Task):
@@ -115,9 +119,23 @@ class TaskChoice(Task):
         return self.items[0]
 
 
+class TaskMultyChoice(Task):
+    actual_version = 1
+    text: str
+    items: list[str]
+    correct_answer: list[str]
+
+    def __init__(self, data, score, version):
+        super().__init__(data, score, version)
+        self.form = get_task_multy_choice_form(tuple(self.items))
+
+    def get_empty_answer(self):
+        return list()
+
+
 class Test:
     _loaded = {}
-    task_dict = {'input': TaskInput, 'choice': TaskChoice}
+    task_dict = {'input': TaskInput, 'choice': TaskChoice, 'multy_choice': TaskMultyChoice}
 
     def __new__(cls, test_id: int = 'new_test'):
         if test_id == 'new_test':
@@ -184,6 +202,8 @@ class SavedAnswer:
         return res
 
     def __init__(self, test_id, exercise_number, user_id):
+        if self.__dict__.get('answer') is not None:
+            return
         self.test_id = test_id
         self.exercise_number = exercise_number
         self.user_id = user_id
@@ -194,7 +214,8 @@ class SavedAnswer:
         self.answer = answer
 
     def get_score(self):
-        return self.task.score * (self.task.correct_answer == self.answer)
+        a = self.task.score * (self.task.correct_answer == self.answer)
+        return a
 
     @classmethod
     def get_loaded(cls):
@@ -204,7 +225,7 @@ class SavedAnswer:
         self._loaded.pop((self.test_id, self.exercise_number, self.user_id))
 
     def __repr__(self):
-        return f'[SavedAnswer for:\ntask: {self.task}\nanswer: {self.answer}]'
+        return f'<<SA task: {self.task} answer: {self.answer}]'
 
     @property
     def loaded(self):
@@ -227,22 +248,26 @@ def logout():
 @app.route('/personal_account', methods=['POST', 'GET'])
 @login_required
 def personal_account():
-    file_oldname = os.path.join("static/img", f'{current_user.get_id()}.png')
-    file_newname_newfile = os.path.join("static/img", "photo.png")
     if request.method == 'GET':
-        if f'static/img/{current_user.get_id()}.png' in os.listdir('static/img'):
-            os.rename(file_oldname, file_newname_newfile)
-            return render_template('personal_account.html', title='YalWeb2022', flag=True)
+        if f'{current_user.get_id()}.png' in os.listdir('static/img'):
+            return render_template('personal_account.html', title='YalWeb2022', flag=True,
+                                   name=f'static/img/{current_user.get_id()}.png')
         else:
             return render_template('personal_account.html', title='YalWeb2022', flag=False)
 
     elif request.method == 'POST':
-        f = request.files['file']
-        f.save(f'static/img/{current_user.get_id()}.png')
-        os.rename(file_oldname, file_newname_newfile)
+        try:
+            User.email = request.form['email']
+            User.username = request.form['text']
+        except BaseException:
+            pass
+        try:
+            f = request.files['file']
+            f.save(f'static/img/{current_user.get_id()}.png')
+        except BaseException:
+            pass
         return render_template('personal_account.html', title='YalWeb2022', flag=True,
                                name=f'static/img/{current_user.get_id()}.png')
-    os.rename(file_newname_newfile, file_oldname)
 
 
 @app.route('/')
@@ -278,6 +303,24 @@ def signup():
     return render_template('signup.html',
                            title='Регистрация',
                            form=form)
+
+
+def radio_btn(test_id, exercise_number, task_names):
+    user_id = current_user.get_id()
+
+    form = TaskInputForm()
+    if form.validate_on_submit():
+        answer = form.data['answer']
+        SavedAnswer(test_id, exercise_number, user_id).set(answer)
+
+    task = Test(test_id).get_task(exercise_number)
+
+    return render_template('multy_choice.html',
+                           title='тест',
+                           condition=task.text,
+                           form=form,
+                           task_names=task_names,
+                           test_id=test_id)
 
 
 @app.route('/view_tests', methods=['GET'])
@@ -339,6 +382,8 @@ def pass_handler(test_id, exercise_number):
         return pass_input(test_id, exercise_number)
     if isinstance(Test(test_id).get_task(exercise_number), TaskChoice):
         return pass_choice(test_id, exercise_number)
+    if isinstance(Test(test_id).get_task(exercise_number), TaskMultyChoice):
+        return pass_multy_choice(test_id, exercise_number)
 
 
 def pass_input(test_id, exercise_number):
@@ -384,6 +429,29 @@ def pass_choice(test_id, exercise_number):
                            form=form)
 
 
+def pass_multy_choice(test_id, exercise_number):
+    task_names = Test(test_id).task_names()
+    user_id = current_user.get_id()
+
+    task = Test(test_id).get_task(exercise_number)
+
+    form = task.form()
+    if form.validate_on_submit():
+        a = form.data['task_choice']
+        b = SavedAnswer(test_id, exercise_number, user_id)
+        b.set(a)
+    checked = SavedAnswer(test_id, exercise_number, user_id).answer
+    form.task_choice.default = checked
+    return render_template('multy_choice.html',
+                           title='тест',
+
+                           task_names=task_names,
+                           test_id=test_id,
+
+                           condition=task.text,
+                           form=form)
+
+
 @app.route("/pass/<int:test_id>/complete")
 @login_required
 def pass_complete(test_id):
@@ -413,27 +481,23 @@ def pass_complete(test_id):
 
 
 @app.route("/test_creator", methods=['GET', 'POST'])
-@login_required
-def test_creator_start():
-    form = newTestForm()
+# @login_required
+def test_creator():
+    form = NewTestForm()
+    question = request.args.get('question', default=1, type=int)
+    max_question = request.args.get('max_question',
+                                    default=(question if question > 10 else 10),
+                                    type=int)
     if form.validate_on_submit():
-        if form.test_name.data == '':
-            flash('Название теста не может быть пустым!')
-        else:
-            return redirect('/test_creator/1')
-    return render_template('test_creator_start.html',
-                           tilte='Конфигурация теста',
-                           form=form)
-
-
-@app.route('/test_creator/<int:exercise>', methods=['GET', 'POST'])
-@login_required
-def test_creator(exercise: int):
-    return render_template('test_creator.html', title=f"Создание теста/вопрос {exercise}")
+        # Save test
+        return redirect('/')
+    print(form.type_of_test.data)
+    return render_template("test_creator.html", subjects=SUBJECTS, question=question,
+                           max_question=max_question, form=form,
+                           type_of_test=TYPES_OF_QUESTIONS[2])
 
 
 if __name__ == '__main__':
-
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
     sql_gate.init_database(con)
