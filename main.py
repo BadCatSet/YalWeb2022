@@ -92,7 +92,7 @@ class Task:
         raise NotImplementedError
 
     def __repr__(self):
-        return str(self.__dict__)
+        return '<Task:' + str(self.__dict__) + '>'
 
 
 class TaskInput(Task):
@@ -200,6 +200,8 @@ class SavedAnswer:
         return res
 
     def __init__(self, test_id, exercise_number, user_id):
+        if self.__dict__.get('answer') is not None:
+            return
         self.test_id = test_id
         self.exercise_number = exercise_number
         self.user_id = user_id
@@ -210,7 +212,8 @@ class SavedAnswer:
         self.answer = answer
 
     def get_score(self):
-        return self.task.score * (self.task.correct_answer == self.answer)
+        a = self.task.score * (self.task.correct_answer == self.answer)
+        return a
 
     @classmethod
     def get_loaded(cls):
@@ -220,7 +223,7 @@ class SavedAnswer:
         self._loaded.pop((self.test_id, self.exercise_number, self.user_id))
 
     def __repr__(self):
-        return f'[SavedAnswer for:\ntask: {self.task}\nanswer: {self.answer}]'
+        return f'<<SA task: {self.task} answer: {self.answer}]'
 
     @property
     def loaded(self):
@@ -436,8 +439,7 @@ def pass_multy_choice(test_id, exercise_number):
                            test_id=test_id,
 
                            condition=task.text,
-                           form=form,
-                           )
+                           form=form)
 
 
 @app.route("/pass/<int:test_id>/complete")
