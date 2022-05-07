@@ -525,6 +525,11 @@ def test_creator2():
                            current_task_type=TYPES_OF_QUESTIONS[task_type])
 
 
+@app.route('/heroku_test')
+def test():
+    return "Heroku test"
+
+
 if __name__ == '__main__':
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
@@ -532,4 +537,4 @@ if __name__ == '__main__':
     if not os.path.exists('tests_data'):
         os.makedirs('tests_data')
     info('...connected successful')
-    serve(app)
+    serve(app, port=int(os.environ.get("PORT", 5000)))
