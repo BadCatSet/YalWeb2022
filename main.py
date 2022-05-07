@@ -4,20 +4,17 @@ import logging
 import os
 import sqlite3
 from logging import debug, error, info
-from pprint import pprint
 from typing import Any, Literal
 
 from flask import Flask, redirect, render_template, request
-
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
+from waitress import serve
 
 from db import sql_gate
 from forms.login import LoginForm
-
 from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, \
     get_task_multy_choice_form
-
 from forms.signup import SignupForm
 from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS, get_editor_input_form
 
@@ -535,5 +532,4 @@ if __name__ == '__main__':
     if not os.path.exists('tests_data'):
         os.makedirs('tests_data')
     info('...connected successful')
-
-    app.run()
+    serve(app)
