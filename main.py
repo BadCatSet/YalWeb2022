@@ -1,13 +1,13 @@
 import datetime
+import datetime
 import json
 import logging
 import os
-from pprint import pprint
 import sqlite3
 from logging import debug, error, info
 from typing import Any, Literal
 
-from flask import Flask, redirect, render_template, request, send_from_directory
+from flask import Flask, redirect, render_template, request, send_from_directory, Blueprint
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 from waitress import serve
@@ -568,6 +568,19 @@ def test():
     return "Heroku test"
 
 
+blueprint = Blueprint(
+    'count_tests_api',
+    __name__,
+    template_folder='templates'
+)
+
+
+@blueprint.route('/api/tests')
+def get_news():
+    print("api")
+    return str(len(sql_gate.get_tests(con)))
+
+
 if __name__ == '__main__':
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
@@ -575,4 +588,6 @@ if __name__ == '__main__':
     if not os.path.exists('tests_data'):
         os.makedirs('tests_data')
     info('...connected successful')
+    app.register_blueprint(blueprint)
     serve(app, port=int(os.environ.get("PORT", 5000)))
+    con.close()
