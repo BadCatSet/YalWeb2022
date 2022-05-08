@@ -11,48 +11,46 @@
               crossorigin="anonymous">
 
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-
-        <title>{{ title }}</title>
-    </head>
-    <body>
-        <nav class="navbar navbar-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">YalWeb2022</a>
-                <form class="d-flex">
-                    {% if current_user.is_authenticated %}
-                        <table>
-                            <tr>
-                                <td>
-                                    <a class="btn btn-success" href="/personal_account">Личный кабинет</a>
-                                </td>
-                                <td>
-                                    <a class="btn btn-warning" href="/view_tests">Мои тесты</a>
-                                </td>
-                                <td>
-                                    <a class="btn btn-danger" href="/logout">Выйти</a>
-                                </td>
-                            </tr>
-                        </table>
-                    {% else %}
-                        <table>
-                            <tr>
-                                <td>
-                                    <a class="btn btn-primary" href="/signup">Зарегистрироваться</a>
-                                </td>
-                                <td>
-                                    <a class="btn btn-success" href="/login">Войти</a>
-                                </td>
-                            </tr>
-                        </table>
-                    {% endif %}
-                </form>
-            </div>
-        </nav>
-        <div id="block_bottom1">Контактная информация: example@test.com</div>
-        <main role="main" class="container">
-            {% block content %}{% endblock %}
-        </main>
-
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">YalWeb2022</a>
+        <form class="d-flex">
+          {% if current_user.is_authenticated %}
+            <table>
+              <tr>
+                <td>
+                  <a class="btn btn-success a-big-margin"  href="/personal_account">Личный кабинет</a>
+                </td>
+                <td>
+                  <a class="btn btn-warning a-big-margin" href="/view_tests">Мои тесты</a>
+                </td>
+                <td>
+                  <a class="btn btn-danger a-big-right-margin" href="/logout">Выйти</a>
+                </td>
+              </tr>
+            </table>
+          {% else %}
+            <table>
+              <tr>
+                <td>
+                  <a class="btn btn-primary a-big-margin" href="/signup">Зарегистрироваться</a>
+                </td>
+                <td>
+                  <a class="btn btn-success a-big-right-margin" href="/login">Войти</a>
+                </td>
+              </tr>
+            </table>
+          {% endif %}
+        </form>
+      </div>
+    </nav>
+    <div id="block_bottom1">Контактная информация: example@test.com</div>
+    <main role="main" class="container">
+      {% block content %}{% endblock %}
+    </main>
         <!-- Bootstrap Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
                 integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"

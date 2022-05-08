@@ -2,6 +2,14 @@ body {
     margin-bottom: 50px;
     background: #36393f;
 }
+.a-big-margin{
+margin-right: 6px;
+margin-left: 6px;
+}
+
+.a-big-right-margin{
+margin-left: 6px;
+}
 
 .a-task-pick {
     color: #d7d5cf;

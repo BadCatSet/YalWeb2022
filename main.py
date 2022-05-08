@@ -301,8 +301,9 @@ def personal_account():
 
     elif request.method == 'POST':
         try:
-            User.email = request.form['email']
-            User.username = request.form['text']
+            sql_gate.update_user(con, current_user.get_id(), new_email=request.form['email'],
+                                 new_username=request.form['text'])
+            login_manager.needs_refresh()
         except BaseException:
             pass
         try:
@@ -310,8 +311,7 @@ def personal_account():
             f.save(f'static/img/{current_user.get_id()}.png')
         except BaseException:
             pass
-        return render_template('personal_account.html', title='YalWeb2022', flag=True,
-                               name=f'static/img/{current_user.get_id()}.png')
+        return redirect('/personal_account')
 
 
 @app.route('/')
@@ -566,6 +566,11 @@ def create(test_id, task_number):
                            current_task_type=TYPES_OF_QUESTIONS[task_type])
 
 
+@app.route('/heroku_test')
+def test():
+    return "Heroku test"
+
+
 if __name__ == '__main__':
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
@@ -573,4 +578,4 @@ if __name__ == '__main__':
     if not os.path.exists('tests_data'):
         os.makedirs('tests_data')
     info('...connected successful')
-    serve(app)
+    serve(app, port=int(os.environ.get("PORT", 5000)))
