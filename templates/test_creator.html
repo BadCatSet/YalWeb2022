@@ -2,8 +2,7 @@
     "Ввод ответа в текстовой или числовой форме",
     "Выбор из нескольких вариантов ответа",
     "Выбор нескольких вариантов из списка"
-) %}
-{% extends "base.html" %}
+) %}{% extends "base.html" %}
 {% block content %}
     <br><br>
     <form id="newTestForm" action method="post" novalidate>
@@ -53,8 +52,7 @@
                 <div class="mb-3">
                     <input type="text" placeholder="Условие вопроса" class="form-control">
                     <br>
-                    <input class="form-control"
-                           placeholder="Новая строка - новый вариант ответа" readonly=true>
+                    <input class="form-control" placeholder="Новая строка - новый вариант ответа" readonly=true>
                     <br>
                     <textarea class="form-control"></textarea>
                     <br>
@@ -62,8 +60,7 @@
                 </div>
             </form>
         {% else %}
-            <input class="form-control"
-                   placeholder="Остальные варианты..." readonly=true>
+            <input class="form-control" placeholder="Остальные варианты..." readonly=true>
         {% endif %}
         {# Вопросы #}
         <br><br>

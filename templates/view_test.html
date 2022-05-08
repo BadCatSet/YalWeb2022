@@ -2,11 +2,65 @@
 
 {% block content %}
 
-  <div class="div-text">
-  {{ test.name }}
-  </div>
-  <div class="div-text">
-  {{  }}
-  </div>
+    <div class="div-text">
+        {{ test.name }}
+    </div>
+
+    <table>
+        <tr>
+            <td>
+                <div class="div div-text">
+                    ссылка:
+                </div>
+            </td>
+            <td>
+                <div class="div-accent">
+                    {{ port }}/pass/{{ test.test_id }}
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div class="div div-text">
+        результаты:
+    </div>
+    <table>
+        <tr>
+            <th class='th div-text td-ds'>id пользователя</th>
+            <th class='th div-text td-ds'>имя пользователя</th>
+            <th class='th div-text td-ds'>результат</th>
+            <th class='th div-text td-ds'>всего баллов</th>
+            <th class='th div-text td-ds'> % выполнения</th>
+        </tr>
+        {% for i in data %}
+            <tr>
+                <td class="td td-ds">
+                    <div class="div div-text">
+                        {{ i[0] }}
+                    </div>
+                </td>
+                <td class="td td-ds">
+                    <div class="div div-text">
+                        {{ i[1] }}
+                    </div>
+                </td>
+                <td class="td td-ds">
+                    <div class="div div-text">
+                        {{ i[2] }}
+                    </div>
+                </td>
+                <td class="td td-ds">
+                    <div class="div div-text">
+                        {{ i[3] }}
+                    </div>
+                </td>
+                <td class="td td-ds">
+                    <div class="div div-text">
+                        {{ int(100 * i[2] / i[3]) }}%
+                    </div>
+                </td>
+
+            </tr>
+        {% endfor %}
+    </table>
 
 {% endblock %}
