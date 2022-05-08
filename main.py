@@ -1,13 +1,13 @@
 import datetime
+import datetime
 import json
 import logging
 import os
-from pprint import pprint
 import sqlite3
 from logging import debug, error, info
 from typing import Any, Literal
 
-from flask import Flask, redirect, render_template, request, send_from_directory
+from flask import Flask, redirect, render_template, request, send_from_directory, Blueprint
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 from waitress import serve
@@ -47,25 +47,22 @@ class User:
     is_anonymous = False
 
     def __init__(self, user_id):
-        data = sql_gate.get_users(con, user_id=user_id)[0]
+        data = sql_gate.get_users(con, user_id=user_id)
         debug(f'creating user object with {data}')
-
-        if not isinstance(data, tuple):
-            err = f'user object must receive a tuple not {type(data)}'
-            error(err)
-            raise AppError('err')
 
         if len(data) == 0:
             self.is_authenticated = False
         else:
             self.is_authenticated = True
-            self.id, self.email, self.password_h, self.username = data
+            self.id, self.email, self.password_h, self.username = data[0]
 
     def get_id(self):
         return self.id
 
     def __str__(self):
-        return f'''username:{self.username}    
+        if not self.is_authenticated:
+            return "No user"
+        return f'''username:{self.username}
         email:{self.email}    
         auth:{self.is_authenticated}'''
 
@@ -571,6 +568,19 @@ def test():
     return "Heroku test"
 
 
+blueprint = Blueprint(
+    'count_tests_api',
+    __name__,
+    template_folder='templates'
+)
+
+
+@blueprint.route('/api/tests')
+def get_news():
+    print("api")
+    return str(len(sql_gate.get_tests(con)))
+
+
 if __name__ == '__main__':
     info('connecting to database...')
     con = sqlite3.connect('db/db.db', check_same_thread=False)
@@ -578,4 +588,6 @@ if __name__ == '__main__':
     if not os.path.exists('tests_data'):
         os.makedirs('tests_data')
     info('...connected successful')
+    app.register_blueprint(blueprint)
     serve(app, port=int(os.environ.get("PORT", 5000)))
+    con.close()

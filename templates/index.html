@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <style type="text/css">
-   BODY { margin-bottom: 50px; color: rgb(255,255,255);}
-   #text{margin-top:260px;
-    position: fixed;
-    border-left: 5px solid #bcf800;
-    padding: 10px;}
-  </style>
-<div><h1>index<br>{{current_user}}</h1></div>
-<div id="text" class="line"><h2>Лев ревет только в том случае, когда сообщает, что территория принадлежит ему или провозглашает себя царем природы.</h2></div>
+    <style type="text/css">
+        BODY {
+            margin-bottom: 50px;
+            color: rgb(255, 255, 255);
+        }
+
+        #text {
+            margin-top: 260px;
+            position: fixed;
+            border-left: 5px solid #bcf800;
+            padding: 10px;
+        }
+    </style>
 {% endblock %}
