@@ -2,11 +2,12 @@ import datetime
 import json
 import logging
 import os
+from pprint import pprint
 import sqlite3
 from logging import debug, error, info
 from typing import Any, Literal
 
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_login import LoginManager, current_user, login_required, login_user, \
     logout_user
 from waitress import serve
@@ -16,7 +17,7 @@ from forms.login import LoginForm
 from forms.pass_all import PassStartForm, TaskInputForm, get_task_choice_form, \
     get_task_multy_choice_form
 from forms.signup import SignupForm
-from forms.test_creator import NewTestForm, SUBJECTS, TYPES_OF_QUESTIONS, get_editor_input_form
+from forms.test_creator import TYPES_OF_QUESTIONS, get_editor_input_form
 
 logging.basicConfig(
     filename='log.log',
@@ -45,7 +46,8 @@ class User:
     is_active = True
     is_anonymous = False
 
-    def __init__(self, data):
+    def __init__(self, user_id):
+        data = sql_gate.get_users(con, user_id=user_id)[0]
         debug(f'creating user object with {data}')
 
         if not isinstance(data, tuple):
@@ -69,21 +71,22 @@ class User:
 
 
 class Task:
-    actual_version: int
     correct_answer: Any
+    task_type: Any
 
-    def __init__(self, data, score, version):
+    def __init__(self, data, score, version, actual_version):
 
-        if version != self.actual_version:
-            data = self.update_data_version(data, version)
+        if version != actual_version:
+            data = self.update_data_version(data, version, actual_version)
 
         self.__dict__.update(data)
         self.score = score
 
     # сделаю по мере необходимости в конкретных заданиях,
     # так же нужна функция для обновления данных в бд
-    def update_data_version(self, content, version):
-        while version != self.actual_version:
+    @staticmethod
+    def update_data_version(content, version, actual_version):
+        while version != actual_version:
             version += 1
         return content
 
@@ -95,7 +98,8 @@ class Task:
 
 
 class TaskInput(Task):
-    actual_version = 1
+    task_type = 'input'
+
     text: str
     answer_type: Literal['int', 'float', 'str']
     correct_answer: int | float | str
@@ -105,13 +109,14 @@ class TaskInput(Task):
 
 
 class TaskChoice(Task):
-    actual_version = 1
+    task_type = 'choice'
+
     text: str
     items: list[str]
     correct_answer: str
 
-    def __init__(self, data, score, version):
-        super().__init__(data, score, version)
+    def __init__(self, data, score, version, actual_version):
+        super().__init__(data, score, version, actual_version)
         self.form = get_task_choice_form(tuple(self.items))
 
     def get_empty_answer(self):
@@ -119,13 +124,14 @@ class TaskChoice(Task):
 
 
 class TaskMultyChoice(Task):
-    actual_version = 1
+    task_type = 'multy_choice'
+
     text: str
     items: list[str]
     correct_answer: list[str]
 
-    def __init__(self, data, score, version):
-        super().__init__(data, score, version)
+    def __init__(self, data, score, version, actual_version):
+        super().__init__(data, score, version, actual_version)
         self.form = get_task_multy_choice_form(tuple(self.items))
 
     def get_empty_answer(self):
@@ -133,6 +139,7 @@ class TaskMultyChoice(Task):
 
 
 class Test:
+    actual_version = 1
     _loaded = {}
     task_dict = {'input': TaskInput, 'choice': TaskChoice, 'multy_choice': TaskMultyChoice}
 
@@ -148,10 +155,10 @@ class Test:
             return test
         test = super().__new__(cls)
         cls._loaded[test_id] = test
-        test._init_from_file(test_id)
+        test.__init__(test_id)
         return test
 
-    def _init_from_file(self, test_id):
+    def __init__(self, test_id):
         data = sql_gate.get_tests(con, test_id)
         self.name = data[0][2]
         self.test_id = test_id
@@ -164,9 +171,11 @@ class Test:
         content = data['content']
 
         for i in content:
-            self.handle_task(i, version)
+            self.tasks.append(self.handle_task(i, version))
 
     def handle_task(self, data, version):
+        if version == 'latest':
+            version = self.actual_version
         task_data = data['task']
         task_type = data['type']
         score = data['score']
@@ -174,7 +183,7 @@ class Test:
         self.max_score += score
 
         task = self.task_dict[task_type]
-        self.tasks.append(task(task_data, score, version))
+        return task(task_data, score, version, self.actual_version)
 
     def match_id(self, other_test_id):
         return self.test_id == other_test_id
@@ -233,12 +242,44 @@ class SavedAnswer:
 
 class CreatingTest(Test):
     _loaded = dict()
+    form_info: Any
+    form_input: Any
+    form_choice: Any
+    form_multy_choice: Any
+
+    def __init__(self, test_id):
+        super().__init__(test_id)
+        self.reconfig_forms()
+
+    def reconfig_forms(self):
+        ln = len(self.tasks)
+        self.form_info = get_editor_input_form(ln, 1, 'info')
+        self.form_input = get_editor_input_form(ln, 2, 'input')
+        self.form_choice = get_editor_input_form(ln, 3, 'choice')
+        self.form_multy_choice = get_editor_input_form(ln, 3, 'multy_choice')
+
+    def add_task(self, data):
+        self.tasks.append(self.handle_task(data, 'latest'))
+        self.reconfig_forms()
+
+    def set_task(self, data, task_number):
+        self.tasks[task_number] = self.handle_task(data, 'latest')
+        self.reconfig_forms()
+
+    def del_task(self, task_number):
+        del self.tasks[task_number]
+        self.reconfig_forms()
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = sql_gate.get_users(con, user_id=user_id)[0]
-    return User(user_data)
+    return User(user_id)
 
 
 @app.route('/logout')
@@ -285,8 +326,8 @@ def login():
     if form.validate_on_submit():
         user = sql_gate.get_users(con, email=form.data['email'],
                                   password=form.data['password'])
-        if len(user):
-            login_user(User(user[0]), remember=True)
+        if user:
+            login_user(User(user[0][0]), remember=True)
             return redirect('/')
     return render_template('login.html',
                            title='Авторизация',
@@ -355,8 +396,16 @@ def view_test(test_id):
 
     if not test:
         return redirect('/')
+    test = Test(test[0][0])
 
-    return redirect('/')  # TODO
+    data = sql_gate.get_f_results(con, test_id)
+    return render_template('view_test.html',
+                           title='просмотр теста',
+
+                           test=test,
+                           port=request.host,
+                           data=data,
+                           int=int)
 
 
 @app.route('/pass/<int:test_id>', methods=['GET', 'POST'])
@@ -458,7 +507,6 @@ def pass_multy_choice(test_id, exercise_number):
 @app.route("/pass/<int:test_id>/complete")
 @login_required
 def pass_complete(test_id):
-    print(CreatingTest._loaded)
     user_id = current_user.get_id()
     results = sql_gate.get_results(con, user_id=user_id, test_id=test_id)
 
@@ -484,44 +532,37 @@ def pass_complete(test_id):
                            procentage=f'{results[2] / results[3]:.0%}')
 
 
-@app.route("/test_creator", methods=['GET', 'POST'])
-# @login_required
-def test_creator():
-    form = NewTestForm()
-    question = request.args.get('question', default=1, type=int)
-    max_question = request.args.get('max_question',
-                                    default=(question if question > 10 else 10),
-                                    type=int)
-    if form.validate_on_submit():
-        # Save test
-        return redirect('/')
-    print(form.type_of_test.data)
+@app.route("/create/<int:test_id>/<int:task_number>", methods=["GET", "POST"])
+def create(test_id, task_number):
+    test = CreatingTest(test_id)
 
-    return render_template("test_creator.html", subjects=SUBJECTS, question=question,
-                           max_question=max_question, form=form,
-                           type_of_test=TYPES_OF_QUESTIONS[2], )
+    if task_number == -1:
+        form = test.form_info
+    else:
+        task = test.get_task(task_number)
 
+        if task.task_type == 'input':
+            form = test.form_input()
 
-fm_input: Any = None
-fm_choice: Any = None
-fm_multy_choice: Any = None
+        elif task.task_type == 'choice':
+            form = test.form_choice()
 
-
-@app.route("/test_creator2", methods=["GET", "POST"])
-def test_creator2():
-    global fm
-
-    if fm is None:
-        fm = get_editor_input_form(5)
-    form = fm()
-    # if form.validate_on_submit():
+        elif task.task_type == 'multy_choice':
+            form = test.form_multy_choice()
+        else:
+            error(f'какая-то хрень в create: {task.__dict__}')
     to_render = []
     for k, v in form.__dict__.items():
         if k.startswith("task_button_"):
             to_render.append(v)
-    task_type = 'input'
+    task_type = form.task_type
 
-    return render_template('test_creator2.html', form=form, to_render=to_render, task_type=task_type,
+    return render_template('test_creator2.html',
+                           title='создание теста',
+
+                           form=form,
+                           to_render=to_render,
+                           task_type=task_type,
                            current_task_type=TYPES_OF_QUESTIONS[task_type])
 
 

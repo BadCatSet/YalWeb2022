@@ -95,6 +95,14 @@ def get_results(con: Con, user_id=None, test_id=None):
     return construct_select(con, 'results', where=attrs).fetchall()
 
 
+def get_f_results(con, test_id):
+    call = """SELECT users.id, users.username, results.real_score, results.max_score FROM results
+    LEFT JOIN tests ON tests.id = results.test_id
+    LEFT JOIN users ON users.id = tests.owner_id   
+    WHERE results.test_id = ?"""
+    return con.execute(call, (test_id,))
+
+
 def add_user(con: Con, email: str, password: str, username: str = None):
     attrs = {
         'email': email,
