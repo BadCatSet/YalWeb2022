@@ -37,6 +37,8 @@
 - logging для логирования процесса работы приложения;
 - bootstrap для библиотеки стилей;
 
+ссылка на heroku:
+    https://mint-edu-yalweb2022.herokuapp.com/
 
 ---
 
