@@ -8,18 +8,24 @@
             {{ i }}
         {% endfor %}
         <p>
-            {% if task_type == "input" %}
-                {{ form.field_0 }}
-                {{ form.field_1 }}
-            {% elif task_type == "choice" %}
-                {{ form.field_0 }}
-                {{ form.field_1 }}
-                {{ form.field_2 }}
-            {% elif task_type == "multy_choice" %}
-                {{ form.field_0 }}
-                {{ form.field_1 }}
-                {{ form.field_2 }}
-            {% endif %}
+        <div class="div div-accent">
+            {{ current_task_type }}
+        </div>
+        {% if task_type == "info" %}
+            {{ form.field_0 }}
+        {% elif task_type == "input" %}
+
+            {{ form.field_0 }}
+            {{ form.field_1 }}
+        {% elif task_type == "choice" %}
+            {{ form.field_0 }}
+            {{ form.field_1 }}
+            {{ form.field_2 }}
+        {% elif task_type == "multy_choice" %}
+            {{ form.field_0 }}
+            {{ form.field_1 }}
+            {{ form.field_2 }}
+        {% endif %}
         <p>
             {{ form.submit }}
     </form>

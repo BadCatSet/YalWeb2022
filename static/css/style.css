@@ -54,6 +54,11 @@ body {
     justify-content: center;
 }
 
+.td-ds {
+    border: 1px solid #d7d5cf;
+    text-decoration: none;
+    padding:10px;
+}
 
 #block_bottom1 {
     position: fixed;
