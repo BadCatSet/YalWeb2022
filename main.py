@@ -257,8 +257,9 @@ def personal_account():
 
     elif request.method == 'POST':
         try:
-            User.email = request.form['email']
-            User.username = request.form['text']
+            sql_gate.update_user(con, current_user.get_id(), new_email=request.form['email'],
+                                 new_username=request.form['text'])
+            login_manager.needs_refresh()
         except BaseException:
             pass
         try:
@@ -266,8 +267,7 @@ def personal_account():
             f.save(f'static/img/{current_user.get_id()}.png')
         except BaseException:
             pass
-        return render_template('personal_account.html', title='YalWeb2022', flag=True,
-                               name=f'static/img/{current_user.get_id()}.png')
+        return redirect('/personal_account')
 
 
 @app.route('/')
