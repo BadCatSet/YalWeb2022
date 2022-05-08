@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "content": [
+    {
+      "task": {
+        "text": "у какого типа данных есть только 1 возможный экземпляр?",
+        "answer_type": "str",
+        "correct_answer": "NoneType"
+      },
+      "type": "input",
+      "score": 50
+    },
+    {
+      "task": {
+        "text": "неупорядоченная коллекция, не может иметь 2 одинаковых элемента",
+        "items": [
+          "str",
+          "list",
+          "set",
+          "bool"
+        ],
+        "correct_answer": "set"
+      },
+      "type": "choice",
+      "score": 50
+    },
+    {
+      "task": {
+        "text": "какие типы данных можно итерировать?",
+        "items": [
+          "list",
+          "int",
+          "str",
+          "set",
+          "bool",
+          "tuple",
+          "float"
+        ],
+        "correct_answer": [
+          "list",
+          "str",
+          "set",
+          "tuple"
+        ]
+      },
+      "type": "multy_choice",
+      "score": 50
+    },
+    {
+      "task": {
+        "text": "какая функция вызывается у объекта при передаче в print",
+        "items": [
+          "__str__",
+          "str",
+          "__repr__",
+          "__print__"
+        ],
+        "correct_answer": "__str__"
+      },
+      "type": "choice",
+      "score": 50
+    },
+    {
+      "task": {
+        "text": "какая функция вызывается при вызове класса",
+        "items": [
+          "__new__",
+          "__init__",
+          "__load__",
+          "__create__"
+        ],
+        "correct_answer": "__new__"
+      },
+      "type": "choice",
+      "score": 50
+    }
+  ]
+}

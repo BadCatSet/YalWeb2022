@@ -47,25 +47,22 @@ class User:
     is_anonymous = False
 
     def __init__(self, user_id):
-        data = sql_gate.get_users(con, user_id=user_id)[0]
+        data = sql_gate.get_users(con, user_id=user_id)
         debug(f'creating user object with {data}')
-
-        if not isinstance(data, tuple):
-            err = f'user object must receive a tuple not {type(data)}'
-            error(err)
-            raise AppError('err')
 
         if len(data) == 0:
             self.is_authenticated = False
         else:
             self.is_authenticated = True
-            self.id, self.email, self.password_h, self.username = data
+            self.id, self.email, self.password_h, self.username = data[0]
 
     def get_id(self):
         return self.id
 
     def __str__(self):
-        return f'''username:{self.username}    
+        if not self.is_authenticated:
+            return "No user"
+        return f'''username:{self.username}
         email:{self.email}    
         auth:{self.is_authenticated}'''
 
