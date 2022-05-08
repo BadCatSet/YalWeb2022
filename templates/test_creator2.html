@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h3>{{ current_task_type }}</h3>
+    <form method="post" action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        {% for i in to_render %}
+            {{ i }}
+        {% endfor %}
+        <p>
+            {% if task_type == "input" %}
+                {{ form.field_0 }}
+                {{ form.field_1 }}
+            {% elif task_type == "choice" %}
+                {{ form.field_0 }}
+                {{ form.field_1 }}
+                {{ form.field_2 }}
+            {% elif task_type == "multy_choice" %}
+                {{ form.field_0 }}
+                {{ form.field_1 }}
+                {{ form.field_2 }}
+            {% endif %}
+        <p>
+            {{ form.submit }}
+    </form>
+{% endblock %}
