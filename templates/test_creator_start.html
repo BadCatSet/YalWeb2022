@@ -4,7 +4,7 @@
     <br><br>
     {% for msg in get_flashed_messages() %}
         <script>
-        alert("{{ msg }}");
+            alert("{{ msg }}");
         </script>
     {% endfor %}
     <form id="newTestForm" action="" method="post" novalidate>
